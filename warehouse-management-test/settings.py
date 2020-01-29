@@ -77,7 +77,8 @@ WSGI_APPLICATION = 'warehouse-management-test.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'warehouse.db'),
+        # 'NAME': os.path.join(BASE_DIR, 'warehouse.db'),
+        'NAME': os.path.join(BASE_DIR + '/warehouse/', 'db.sqlite3'),
     }
 }
 
