@@ -1,12 +1,14 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-# Create your views here.
+
 def index(request):
     return render(request, 'warehouse/index.html')
 
-def customer(request):
-    return render(request, 'warehouse/customer.html')
+
+def order(request):
+
+    return render(request, 'warehouse/order.html')
 
 
 def supplier(request):
