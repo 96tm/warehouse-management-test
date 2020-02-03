@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Покупка</title>
-</head>
-<body>
+{% extends 'warehouse/index.html' %}
+
+{% block content %}
     <h2>Покупка</h2>
     <form action="" method="post">
         {% csrf_token %}
@@ -46,5 +42,4 @@
             <input type="submit" value="Купить">
         </div>
     </form>
-</body>
-</html>
+{% endblock %}
