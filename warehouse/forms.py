@@ -1,8 +1,17 @@
-from django.forms import ModelForm
-from .models import Cargo
+from django import forms
+from .models import Cargo, CargoDetails
 
 
-class CargoForm(ModelForm):
+class NeworderForm(forms.ModelForm):
+
     class Meta:
         model = Cargo
-        fields = ('name', 'supplier', 'number',)
+        fields = ('supplier',)
+
+
+class OrderdetailsForm(forms.ModelForm):
+
+    class Meta:
+        model = CargoDetails
+        fields = ('order_number', 'name', 'quantity')
+

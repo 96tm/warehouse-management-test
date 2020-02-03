@@ -1,6 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
-
+import uuid
 # Create your models here.
 from django.db.models import ManyToManyField
 
@@ -21,6 +21,7 @@ class Supplier(models.Model):
     legal_details = models.TextField()
     contact_info = models.TextField(null=True)
     categories = models.ManyToManyField(Category, through='SupplierCategory')
+    objects = models.Manager()
 
     def __str__(self):
         return self.organization
@@ -82,16 +83,23 @@ class Cargo(models.Model):
     DONE = 'Исполнено'
     IN_TRANSIT = 'В пути'
     choices = [(DONE, DONE), (IN_TRANSIT, IN_TRANSIT)]
-    objects = models.Manager()
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    name = models.CharField(max_length=80, default='stuff')
-    number = models.IntegerField(default=1, validators=[MinValueValidator(1)])
     status = models.CharField(max_length=9, choices=choices, default=IN_TRANSIT)
     date = models.DateTimeField(auto_now_add=True)
     stocks = models.ManyToManyField(Stock, through='CargoStock')
 
     def __str__(self):
-        return str(self.name) + ', ' + str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
+
+        return str(self.pk) + ', ' + str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
+
+
+class CargoDetails(models.Model):
+    order_number = models.ForeignKey(Cargo, on_delete=models.CASCADE)
+    name = models.CharField(max_length=20)
+    quantity = models.SmallIntegerField(default=1)
+
+    def __str__(self):
+        return str(self.order_number.pk) + ', ' + str(self.name) + ', ' + str(self.quantity)
 
 
 class ShipmentStock(models.Model):
