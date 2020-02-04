@@ -1,7 +1,7 @@
 {% extends 'warehouse/index.html' %}
 
 {% block content %}
-        <form method="POST">
+        <form action="{% url 'warehouse:order_details' %}" method="POST">
             {% csrf_token %}
             {{ form.as_p }}
         <input type="submit">
