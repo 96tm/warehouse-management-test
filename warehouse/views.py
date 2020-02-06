@@ -29,13 +29,17 @@ def cargo_new(request):
     return render(request, 'warehouse/cargo_new.html', {'form': form})
 
 
-def cargo_fill(request):
-    if request.method == 'POST':
-        form = CargoFillForm(request.POST)
-        if form.is_valid():
-            form.save()
-    form = CargoFillForm()
-    return render(request, 'warehouse/cargo_fill.html', {'form': form})
+# def cargo_fill(request):
+#     if request.method == 'POST':
+#         form = CargoFillForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#     form = CargoFillForm()
+#     return render(request, 'warehouse/cargo_fill.html', {'form': form})
+
+def cargo_fill(request, pk):
+    cargo = get_object_or_404(Cargo, pk=pk)
+    return render(request, 'warehouse/cargo_fill.html', {'cargo': cargo})
 
 
 def cargo_list(request):
