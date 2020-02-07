@@ -1,5 +1,6 @@
-{% extends 'warehouse/index.html' %}
+
 {% block content %}
+        {{ cargo.pk}} {{ cargo.supplier }}
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}

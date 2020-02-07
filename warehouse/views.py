@@ -4,7 +4,7 @@ from .models import Cargo, CargoDetails
 from django.http import HttpResponse
 # Create your views here.
 from .models import Supplier
-from .forms import NeworderForm, OrderdetailsForm
+from .forms import CargoNewForm, CargoFillForm
 
 
 def index(request):
@@ -20,25 +20,29 @@ def supplier(request):
     return render(request, 'warehouse/supplier.html')
 
 
-def neworder(request):
+def cargo_new(request):
     if request.method == "POST":
-        form = NeworderForm(request.POST)
+        form = CargoNewForm(request.POST)
         if form.is_valid():
             form.save()
-    form = NeworderForm()
-    return render(request, 'warehouse/order_new.html', {'form': form})
+    form = CargoNewForm()
+    return render(request, 'warehouse/cargo_new.html', {'form': form})
 
 
-def orderdetails(request):
-    if request.method == 'POST':
-        form = OrderdetailsForm(request.POST)
-        if form.is_valid():
-            form.save()
-    form = OrderdetailsForm()
-    return render(request, 'warehouse/order_details.html', {'form': form})
+# def cargo_fill(request):
+#     if request.method == 'POST':
+#         form = CargoFillForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#     form = CargoFillForm()
+#     return render(request, 'warehouse/cargo_fill.html', {'form': form})
+
+def cargo_fill(request, pk):
+    cargo = get_object_or_404(Cargo, pk=pk)
+    return render(request, 'warehouse/cargo_fill.html', {'cargo': cargo})
 
 
-def orders_list(request):
-    orders = Cargo.objects.all()
-    return render(request, "warehouse/order_list.html", {'orders': orders})
+def cargo_list(request):
+    cargo_all = Cargo.objects.all()
+    return render(request, "warehouse/cargo_list.html", {'cargo_all': cargo_all})
 
