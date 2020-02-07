@@ -18,7 +18,6 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path('warehouse/', include('warehouse.urls')),
-    path('', RedirectView.as_view(url='warehouse/')),
+    path('', include('warehouse.urls')),
     path('admin/', admin.site.urls),
 ]
