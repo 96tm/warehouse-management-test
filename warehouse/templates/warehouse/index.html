@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
+{% load i18n %}
 <head>
     <meta charset="UTF-8">
-    <title>Склад</title>
+    <title>{% trans "Склад" %}</title>
 </head>
 <body>
-    <div><a href="{% url 'warehouse:customer' %}">Покупка</a></div>
-    <div><a href="{% url 'warehouse:supplier' %}">Поставка</a></div>
+    <div><a href="{% url 'warehouse:customer' %}">{% trans "Покупка" %}</a></div>
+    <div><a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a></div>
 </body>
 </html>
