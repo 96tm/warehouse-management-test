@@ -6,12 +6,11 @@ class CargoNewForm(forms.ModelForm):
 
     class Meta:
         model = Cargo
-        fields = ('supplier',)
+        fields = ('supplier', 'status',)
 
 
 class CargoFillForm(forms.ModelForm):
 
     class Meta:
         model = CargoDetails
-        fields = ('order_number', 'name', 'quantity')
-
+        fields = ('order_number', 'name', 'quantity',)

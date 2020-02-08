@@ -10,4 +10,3 @@ urlpatterns = [path('', views.index, name='index'),
                path('cargo_fill', views.cargo_fill, name='cargo_fill'),
                path('cargo_list', views.cargo_list, name='cargo_list'),
                path('cargo/<int:pk>/', views.cargo_fill, name='cargo_detail'), ]
-
