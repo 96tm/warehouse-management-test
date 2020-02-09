@@ -7,6 +7,7 @@ verify_ssl = true
 
 [packages]
 django = "*"
+django-mptt = "*"
 
 [requires]
 python_version = "3.8"
