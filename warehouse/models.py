@@ -32,7 +32,7 @@ class Supplier(models.Model):
     legal_details = models.TextField(verbose_name=_('Реквизиты'))
     contact_info = models.TextField(null=True,
                                     verbose_name=_('Контактная информация'))
-    categories = models.ManyToManyField(Category, through='SupplierCategory')
+    categories = models.ManyToManyField(Category, through='SupplierCategory', related_name='suppliers')
 
     def __str__(self):
         return self.organization
@@ -142,6 +142,8 @@ class CargoStock(models.Model):
 class SupplierCategory(models.Model):
     class Meta:
         unique_together = (("supplier", "category"),)
+        verbose_name = _('supplier_category')
+        verbose_name_plural = _('supplier_categories')
 
-    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)

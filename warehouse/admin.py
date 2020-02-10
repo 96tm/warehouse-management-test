@@ -10,16 +10,74 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.db.models import Sum
 from django.core.mail import EmailMessage
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
 
 from .models import Supplier, Customer, Stock, Category
-from .models import Shipment, ShipmentStock
+from .models import Shipment, ShipmentStock, Cargo
 
 
 # функция gettext с псевдонимом _ применяется к строками
 # для последующего перевода
+
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = ['organization', 'phone_number', 'email',
+                  'address',  'legal_details', 'contact_info', 'categories']
+        widgets = {'organization': forms.Textarea(attrs={'rows': '2',
+                                                         'cols': '80'}),
+                   'address': forms.Textarea(attrs={'rows': '2',
+                                                    'cols': '80'}),
+                   'legal_details': forms.Textarea(attrs={'rows': '2',
+                                                          'cols': '80'}),
+                   'contact_info': forms.Textarea(attrs={'rows': '2',
+                                                         'cols': '80'})}
+
+    supplier_categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple(
+            verbose_name=_('Категория'),
+            is_stacked=False
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SupplierForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            initial_categories = self.instance.suppliercategory_set.select_related('category')
+            self.fields['supplier_categories'].initial = [i.category for i in initial_categories]
+
+
+class SupplierAdmin(admin.ModelAdmin):
+    class CargoInline(admin.StackedInline):
+        model = Cargo
+        min_num = 0
+        max_num = 0
+        can_delete = False
+        readonly_fields = ['status', ]
+
+    form = SupplierForm
+    inlines = [CargoInline, ]
+    list_display = ['organization', 'email', 'address', ]
+    fieldsets = ((_('ЮРИДИЧЕСКОЕ ЛИЦО'), {'fields':
+                                          ('organization',
+                                           'address',
+                                           'legal_details', )}),
+                 (_('КОНТАКТНЫЕ ДАННЫЕ'), {'fields':
+                                           ('contact_info',
+                                            'phone_number',
+                                            'email', )}),
+                 (_('КАТЕГОРИИ ТОВАРОВ'), {'fields':
+                                           ('supplier_categories', )}))
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.categories.set(form.cleaned_data['supplier_categories'])
+
 
 class ShipmentForm(forms.ModelForm):
     class Meta:
@@ -162,7 +220,7 @@ class ShipmentAdmin(admin.ModelAdmin):
         message.send()
 
 
-admin.site.register(Supplier)
+admin.site.register(Supplier, SupplierAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Stock)
 admin.site.register(Category)
