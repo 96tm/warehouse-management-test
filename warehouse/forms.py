@@ -4,6 +4,7 @@ from django import forms
 class OrderForm(forms.Form):
     name = forms.ChoiceField(label='Ваше имя: ', choices=())
     items = forms.ChoiceField(label='Выберите товар: ', choices=())
+    item_count = forms.DecimalField(label='Количество товара: ', initial=1)
 
     def __init__(self, *args, **kwargs):
         customers = kwargs.get('initial')['name']

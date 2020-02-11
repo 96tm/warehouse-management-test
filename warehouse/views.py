@@ -5,11 +5,10 @@ from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
-from .models import Shipment
 from .forms import OrderForm
 from django.views.generic.edit import FormView
 from django.views.generic import View
-from .models import Customer, Stock
+from .models import Customer, Stock, Shipment, ShipmentStock
 
 def index(request):
     return render(request, 'warehouse/index.html')
@@ -29,7 +28,15 @@ class OrderView(FormView):
             'customer_name': customer.full_name,
             'customer_id': customer.id,
             'product_name': product.name,
+            'product_count': data['item_count'],
         }
+        sh = Shipment.objects.create(customer=customer,
+                                     status='Проверка')
+        sh.save
+        sh_stock = ShipmentStock.objects.create(shipment=sh,
+                                                stock=product,
+                                                number=int(data['item_count']))
+        sh_stock.save
         return render(self.request, 'warehouse/order_successful.html', context)
 
     def get_initial(self):
