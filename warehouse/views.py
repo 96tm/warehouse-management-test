@@ -1,7 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.forms import modelform_factory
-from django.http import HttpResponse
-from .models import Cargo, CargoDetails, Supplier
+from .models import Cargo, CargoDetails
 from .forms import CargoNewForm, CargoFillForm
 # Create your views here.
 
@@ -15,7 +13,6 @@ def customer(request):
 
 
 def supplier(request):
-    # suppliers = Supplier.objects.all().order_by('organization')
     return render(request, 'warehouse/supplier.html')
 
 

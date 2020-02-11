@@ -66,19 +66,6 @@ class Shipment(models.Model):
         return str(self.customer) + ', ' + self.status + ', ' + str(self.date)
 
 
-# class Cargo(models.Model):
-#     DONE = 'Исполнено'
-#     IN_TRANSIT = 'В пути'
-#     choices = [(DONE, DONE), (IN_TRANSIT, IN_TRANSIT)]
-#
-#     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-#     status = models.CharField(max_length=9, choices=choices, default=IN_TRANSIT)
-#     date = models.DateTimeField(auto_now_add=True)
-#     stocks = models.ManyToManyField(Stock, through='CargoStock')
-#
-#     def __str__(self):
-#         return str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
-
 class Cargo(models.Model):
     DONE = 'Исполнено'
     IN_TRANSIT = 'В пути'
