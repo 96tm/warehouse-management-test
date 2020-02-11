@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
+{% load i18n %}
 <head>
     <meta charset="UTF-8">
-    <title>Склад</title>
+    <title>{% trans "Склад" %}</title>
     <div class="header">
         <div class="header-right">
-        <a href="{% url 'warehouse:index' %}">Index</a>
-        <a href="{% url 'warehouse:customer' %}">Покупка</a>
-        <a href="{% url 'warehouse:supplier' %}">Поставка</a>
-        <a href="{% url 'warehouse:cargo_list' %}">Список заказов</a>
-        <a href="{% url 'warehouse:cargo_new' %}">Новый заказ</a>
+        <a href="{% url 'warehouse:index' %}">{% trans "Index" %}</a>
+        <a href="{% url 'warehouse:customer' %}">{% trans "Покупка" %}</a>
+        <a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a>
+        <a href="{% url 'warehouse:cargo_list' %}">{% trans "Список заказов" %}</a>
+        <a href="{% url 'warehouse:cargo_new' %}">{% trans "Новый заказ" %}</a>
         </div>
     </div>
 </head>

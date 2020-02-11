@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ru">
+{% load i18n %}
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Покупка подтверждена" %}</title>
+</head>
+<body>
+<h2>{% trans "Покупка подтверждена, спасибо!" %}</h2>
+<a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
+</body>
+</html>

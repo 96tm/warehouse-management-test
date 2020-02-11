@@ -7,6 +7,8 @@ verify_ssl = true
 
 [packages]
 django = "*"
+qrcode = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.8"
