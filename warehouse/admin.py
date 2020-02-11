@@ -15,7 +15,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
 
-from .models import Supplier, Customer, Stock, Category
+from .models import Supplier, Customer, Stock, Category, CargoDetails
 from .models import Shipment, ShipmentStock, Cargo, CargoStock
 
 
@@ -371,10 +371,10 @@ class ShipmentAdmin(admin.ModelAdmin):
                                attachments=[attachment, ])
         message.send()
 
-
 admin.site.register(Supplier, SupplierAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Stock)
 admin.site.register(Category)
+admin.site.register(CargoDetails)
 admin.site.register(Shipment, ShipmentAdmin)
 admin.site.register(Cargo, CargoAdmin)

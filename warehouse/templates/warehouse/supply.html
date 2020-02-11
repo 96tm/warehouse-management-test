@@ -1,0 +1,7 @@
+{% extends 'warehouse/index.html' %}
+
+<form action="" method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" value="OK">
+</form>

@@ -1,0 +1,9 @@
+{% extends 'warehouse/index.html' %}
+
+{% block content %}
+    {% for cargo in cargo_all %}
+    <div>
+        <a href="{% url 'warehouse:cargo_detail' pk=cargo.pk %}">{{ cargo }}</a>
+    </div>
+    {% endfor %}
+{% endblock %}

@@ -1,9 +1,9 @@
+from django.core.validators import MinValueValidator
 from django.db import models
-
+import uuid
+from django.db.models import ManyToManyField
 from django.conf import settings
-
 from django.utils.translation import gettext as _
-
 import pytz
 
 
@@ -34,6 +34,7 @@ class Supplier(models.Model):
                                     verbose_name=_('Контактная информация'))
     categories = models.ManyToManyField(Category, through='SupplierCategory',
                                         related_name='suppliers')
+    objects = models.Manager()
 
     def __str__(self):
         return self.organization
@@ -107,7 +108,6 @@ class Cargo(models.Model):
     DONE = 'Исполнено'
     IN_TRANSIT = 'В пути'
     choices = [(DONE, DONE), (IN_TRANSIT, IN_TRANSIT)]
-
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,
                                  verbose_name=_('Поставщик'))
     status = models.CharField(max_length=9, choices=choices,
@@ -118,7 +118,17 @@ class Cargo(models.Model):
                                     verbose_name=_('Товары'))
 
     def __str__(self):
-        return str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
+
+        return str(self.pk) + ', ' + str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
+
+
+class CargoDetails(models.Model):
+    order_number = models.ForeignKey(Cargo, on_delete=models.CASCADE)
+    name = models.CharField(max_length=20)
+    quantity = models.SmallIntegerField(default=1)
+
+    def __str__(self):
+        return str(self.order_number.pk) + ', ' + str(self.name) + ', ' + str(self.quantity)
 
 
 class ShipmentStock(models.Model):
@@ -150,7 +160,7 @@ class CargoStock(models.Model):
 
 class SupplierCategory(models.Model):
     class Meta:
-        unique_together = (("supplier", "category"),)
+        unique_together = (('supplier', 'category'),)
         verbose_name = _('supplier_category')
         verbose_name_plural = _('supplier_categories')
 

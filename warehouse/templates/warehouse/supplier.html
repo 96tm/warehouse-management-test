@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    {% load i18n %}
-    <title>{% trans "Поставка" %}</title>
-</head>
-<body>
-    <h2>{% trans "Поставка" %}</h2>
+{% extends 'warehouse/index.html' %}
+
+{% block content %}
+    <h2>Поставка</h2>
     <form action="" method="post">
         {% csrf_token %}
         <div>
@@ -48,5 +43,9 @@
             <input type="submit" value="{% trans "Отправить запрос на поставку" %}">
         </div>
     </form>
-</body>
-</html>
+
+<!--{% for supplier in suppliers %}-->
+    <div>
+        {{supplier}}
+    </div>{% endfor %}
+{% endblock %}

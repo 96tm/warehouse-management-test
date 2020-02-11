@@ -4,9 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <title>{% trans "Склад" %}</title>
+    <div class="header">
+        <div class="header-right">
+        <a href="{% url 'warehouse:index' %}">{% trans "Index" %}</a>
+        <a href="{% url 'warehouse:customer' %}">{% trans "Покупка" %}</a>
+        <a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a>
+        <a href="{% url 'warehouse:cargo_list' %}">{% trans "Список заказов" %}</a>
+        <a href="{% url 'warehouse:cargo_new' %}">{% trans "Новый заказ" %}</a>
+        </div>
+    </div>
 </head>
 <body>
-    <div><a href="{% url 'warehouse:customer' %}">{% trans "Покупка" %}</a></div>
-    <div><a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a></div>
+{% block content %}
+{% endblock %}
 </body>
 </html>
