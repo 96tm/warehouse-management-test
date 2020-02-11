@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+    {% block submit_buttons_bottom %}
+        {% if STATUS_VALUE == STATUS_IN_TRANSIT%}
+            <div class="submit-row list-group">
+                <input type="submit" title="{% trans "Подтвердить получение поставки" %}"
+                       class="default list-group-item active"
+                       name="_confirm" value="{% trans "Подтвердить получение поставки" %}"
+                       {{ onclick_attrib }}>
+            </div>
+     {% endif %}
+    {% endblock %}

@@ -16,67 +16,53 @@ from email.mime.base import MIMEBase
 from email.encoders import encode_base64
 
 from .models import Supplier, Customer, Stock, Category
-from .models import Shipment, ShipmentStock, Cargo
+from .models import Shipment, ShipmentStock, Cargo, CargoStock
 
 
 # функция gettext с псевдонимом _ применяется к строками
 # для последующего перевода
 
-class SupplierForm(forms.ModelForm):
-    class Meta:
-        model = Supplier
-        fields = ['organization', 'phone_number', 'email',
-                  'address',  'legal_details', 'contact_info', 'categories']
-        widgets = {'organization': forms.Textarea(attrs={'rows': '2',
-                                                         'cols': '80'}),
-                   'address': forms.Textarea(attrs={'rows': '2',
-                                                    'cols': '80'}),
-                   'legal_details': forms.Textarea(attrs={'rows': '2',
-                                                          'cols': '80'}),
-                   'contact_info': forms.Textarea(attrs={'rows': '2',
-                                                         'cols': '80'})}
+def format_date(date):
+    return (date
+            .astimezone(tz=pytz.timezone(settings.TIME_ZONE))
+            .strftime('%Y-%m-%d %H:%M:%S'))
 
-    supplier_categories = forms.ModelMultipleChoiceField(
-        queryset=Category.objects.all(),
-        required=False,
-        widget=FilteredSelectMultiple(
-            verbose_name=_('Категория'),
-            is_stacked=False
-        ),
-    )
+
+class CargoForm(forms.ModelForm):
+    class Meta:
+        model = Cargo
+        fields = []
+
+    cargo_id = forms.CharField(label=_('Номер поставки'))
+    cargo_supplier = forms.CharField(label=_('Поставщик'))
+    cargo_status = forms.CharField(label=_('Статус поставки'))
+    cargo_date = forms.CharField(label=_('Дата поставки'))
+    number = forms.CharField(label=_('Количество позиций'))
+    total = forms.CharField(label=_('Сумма поставки'))
 
     def __init__(self, *args, **kwargs):
-        super(SupplierForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.instance.pk:
-            initial_categories = self.instance.suppliercategory_set.select_related('category')
-            self.fields['supplier_categories'].initial = [i.category for i in initial_categories]
-
-
-class SupplierAdmin(admin.ModelAdmin):
-    class CargoInline(admin.StackedInline):
-        model = Cargo
-        min_num = 0
-        max_num = 0
-        can_delete = False
-        readonly_fields = ['status', ]
-
-    form = SupplierForm
-    inlines = [CargoInline, ]
-    list_display = ['organization', 'email', 'address', ]
-    fieldsets = ((_('ЮРИДИЧЕСКОЕ ЛИЦО'), {'fields':
-                                          ('organization',
-                                           'address',
-                                           'legal_details', )}),
-                 (_('КОНТАКТНЫЕ ДАННЫЕ'), {'fields':
-                                           ('contact_info',
-                                            'phone_number',
-                                            'email', )}),
-                 (_('КАТЕГОРИИ ТОВАРОВ'), {'fields':
-                                           ('supplier_categories', )}))
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        obj.categories.set(form.cleaned_data['supplier_categories'])
+            current_cargo = self.instance
+            for key, value in self.fields.items():
+                value.widget = forms.TextInput({'size': '35',
+                                                'readonly': 'readonly'})
+                value.required = False
+            cargo_stocks = (CargoStock
+                            .objects
+                            .filter(cargo=current_cargo)
+                            .select_related('stock'))
+            number = sum([cargo_stock.number for cargo_stock in cargo_stocks])
+            total = sum([cargo_stock.stock.price * cargo_stock.number
+                        for cargo_stock in cargo_stocks])
+            supplier = current_cargo.supplier.organization
+            date = current_cargo.date
+            self.fields['cargo_id'].initial = current_cargo.id
+            self.fields['cargo_status'].initial = current_cargo.status
+            self.fields['cargo_date'].initial = format_date(date)
+            self.fields['cargo_supplier'].initial = supplier
+            self.fields['number'].initial = number
+            self.fields['total'].initial = total
 
 
 class ShipmentForm(forms.ModelForm):
@@ -120,9 +106,7 @@ class ShipmentForm(forms.ModelForm):
             number = (ShipmentStock.objects
                       .filter(shipment=current_shipment)
                       .aggregate(Sum('number')))['number__sum']
-            date = (current_shipment.date
-                    .astimezone(tz=pytz.timezone(settings.TIME_ZONE))
-                    .strftime('%Y-%m-%d %H:%M:%S'))
+            date = format_date(current_shipment.date)
             values = (number, money, current_shipment.customer.full_name,
                       current_shipment.id, date, current_shipment.status,
                       current_shipment.qr)
@@ -130,18 +114,172 @@ class ShipmentForm(forms.ModelForm):
                 self.fields[field_name].initial = values[index]
 
 
+class StockFormM2M(forms.ModelForm):
+    class Meta:
+        fields = []
+
+    stock_article = forms.CharField(label=_('Артикул'))
+    stock_number = forms.CharField(label=_('Количество на складе'))
+    cargo_number = forms.CharField(label=_('Количество в заявке'))
+    stock_price = forms.CharField(label=_('Цена за штуку'))
+    stock_category = forms.CharField(label=_('Категория'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            for key, value in self.fields.items():
+                value.widget = forms.TextInput({'size': '35',
+                                                'readonly': 'readonly'})
+                value.required = False
+
+            cargo_stock = self.instance
+            self.fields['stock_number'].initial = cargo_stock.stock.number
+            self.fields['cargo_number'].initial = cargo_stock.number
+            self.fields['stock_price'].initial = cargo_stock.stock.price
+            self.fields['stock_article'].initial = cargo_stock.stock.article
+            self.fields['stock_category'].initial = cargo_stock.stock.category
+
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = '__all__'
+        widgets = {'contact_info': forms.Textarea(attrs={'rows': '2',
+                                                         'cols': '34'}),
+                   'full_name': forms.TextInput(attrs={'size': '35'}),
+                   'phone_number': forms.TextInput(attrs={'size': '35'}),
+                   'email': forms.TextInput(attrs={'size': '35'}), }
+
+
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = ['organization', 'phone_number', 'email',
+                  'address',  'legal_details', 'contact_info', 'categories']
+        widgets = {'organization': forms.Textarea(attrs={'rows': '2',
+                                                         'cols': '80'}),
+                   'address': forms.Textarea(attrs={'rows': '2',
+                                                    'cols': '80'}),
+                   'legal_details': forms.Textarea(attrs={'rows': '2',
+                                                          'cols': '80'}),
+                   'contact_info': forms.Textarea(attrs={'rows': '2',
+                                                         'cols': '80'})}
+
+    supplier_categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple(
+            verbose_name=_('Категория'),
+            is_stacked=False
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(SupplierForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            initial = (self
+                       .instance
+                       .suppliercategory_set
+                       .select_related('category'))
+            self.fields['supplier_categories'].initial = [i.category
+                                                          for i in initial]
+
+
+class CargoAdmin(admin.ModelAdmin):
+    class StockInline(admin.StackedInline):
+        model = CargoStock
+        form = StockFormM2M
+        max_num = 0
+        min_num = 0
+        verbose_name = _('Товар')
+        verbose_name_plural = _('Товары')
+        can_delete = False
+
+    form = CargoForm
+    # поля для отображения в списке поставок
+    list_display = ['supplier', 'date', 'status', ]
+    # поля для фильтрации
+    list_filter = ['date', 'supplier', 'status', ]
+    # поля для текстового поиска
+    search_fields = ['supplier__organization', ]
+    fieldsets = ((_('ИНФОРМАЦИЯ О ПОСТАВКЕ'),
+                  {'fields': ('cargo_id', 'cargo_supplier',
+                              'cargo_status', 'cargo_date',
+                              'number', 'total')}), )
+    inlines = [StockInline, ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def change_view(self, request, object_id,
+                    form_url='', extra_context=None):
+        extra = extra_context or {}
+        extra['STATUS_VALUE'] = Cargo.objects.get(pk=object_id).status
+        extra['STATUS_IN_TRANSIT'] = Cargo.IN_TRANSIT
+        extra['STATUS_DONE'] = Cargo.DONE
+        return super().change_view(request, object_id,
+                                   form_url,
+                                   extra_context=extra)
+
+    def save_model(self, request, obj, form, change):
+        if '_confirm' in request.POST and obj.status == Cargo.IN_TRANSIT:
+            cargo_stocks = CargoStock.objects.filter(cargo=obj)
+            for cs in cargo_stocks:
+                cs.stock.number += cs.number
+                cs.stock.save()
+            obj.status = Cargo.DONE
+        super().save_model(request, obj, form, change)
+
+
+class SupplierAdmin(admin.ModelAdmin):
+    class CargoInline(admin.StackedInline):
+        model = Cargo
+        form = CargoForm
+        min_num = 0
+        max_num = 0
+        can_delete = False
+        show_change_link = True
+
+    form = SupplierForm
+    inlines = [CargoInline, ]
+    list_display = ['organization', 'email', 'phone_number', 'address', ]
+    fieldsets = ((_('ЮРИДИЧЕСКОЕ ЛИЦО'), {'fields':
+                                          ('organization',
+                                           'address',
+                                           'legal_details', )}),
+                 (_('КОНТАКТНЫЕ ДАННЫЕ'), {'fields':
+                                           ('contact_info',
+                                            'phone_number',
+                                            'email', )}),
+                 (_('КАТЕГОРИИ ТОВАРОВ'), {'fields':
+                                           ('supplier_categories', )}))
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.categories.set(form.cleaned_data['supplier_categories'])
+
+    # не отображаем список записей suppliercategory
+    # при подтверждении удаления
+    def get_deleted_objects(self, objs, request):
+        for obj in objs:
+            obj.suppliercategory_set.set([])
+        return super().get_deleted_objects(objs, request)
+
+
 class CustomerAdmin(admin.ModelAdmin):
     # объект для отображения заказов выбранного покупателя
     class ShipmentInline(admin.StackedInline):
         form = ShipmentForm
         model = Shipment
-        can_delete = False
         min_num = 0
         max_num = 0
         verbose_name = _("Покупка")
         verbose_name_plural = _("Покупки")
+        can_delete = False
         show_change_link = True
 
+    form = CustomerForm
+    list_display = ['full_name', 'email', 'phone_number']
     inlines = [ShipmentInline, ]
     fieldsets = (
         (_('ДАННЫЕ ПОКУПАТЕЛЯ'),
@@ -151,16 +289,30 @@ class CustomerAdmin(admin.ModelAdmin):
 
 
 class ShipmentAdmin(admin.ModelAdmin):
+    class StockInline(admin.StackedInline):
+        model = ShipmentStock
+        form = StockFormM2M
+        max_num = 0
+        min_num = 0
+        verbose_name = _('Товар')
+        verbose_name_plural = _('Товары')
+        can_delete = False
+
     form = ShipmentForm
     # поля для отображения в списке погрузок
-    list_display = ['date', 'customer', 'status', 'qr', ]
+    list_display = ['customer', 'date', 'status', 'qr', ]
     # поля для фильтрации
     list_filter = ['date', 'customer', 'status', ]
     # поля для текстового поиска
     search_fields = ['status', 'customer__full_name', ]
     # поля формы изменения погрузки
-    fields = ['shipment_id', 'customer_name', 'number_of_items',
-              'total', 'shipment_status', 'shipment_date', 'shipment_qr', ]
+    fieldsets = ((_('ИНФОРМАЦИЯ О ПОКУПКЕ'),
+                  {'fields': ('shipment_id', 'customer_name',
+                              'number_of_items', 'total',
+                              'shipment_status', 'shipment_date',
+                              'shipment_qr', )}), )
+
+    inlines = [StockInline, ]
 
     # убираем кнопку "Добавить погрузку" при отображении списка погрузок
     def has_add_permission(self, request):
@@ -194,7 +346,7 @@ class ShipmentAdmin(admin.ModelAdmin):
         extra['STATUS_CREATED'] = Shipment.CREATED
         extra['STATUS_SENT'] = Shipment.SENT
         return super(ShipmentAdmin, self).change_view(request, object_id,
-                                                      form_url='',
+                                                      form_url,
                                                       extra_context=extra)
 
     def get_qr(self, link):
@@ -225,3 +377,4 @@ admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Stock)
 admin.site.register(Category)
 admin.site.register(Shipment, ShipmentAdmin)
+admin.site.register(Cargo, CargoAdmin)

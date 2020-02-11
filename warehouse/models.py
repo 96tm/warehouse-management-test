@@ -32,7 +32,8 @@ class Supplier(models.Model):
     legal_details = models.TextField(verbose_name=_('Реквизиты'))
     contact_info = models.TextField(null=True,
                                     verbose_name=_('Контактная информация'))
-    categories = models.ManyToManyField(Category, through='SupplierCategory', related_name='suppliers')
+    categories = models.ManyToManyField(Category, through='SupplierCategory',
+                                        related_name='suppliers')
 
     def __str__(self):
         return self.organization
@@ -46,7 +47,8 @@ class Customer(models.Model):
     full_name = models.CharField(max_length=80, verbose_name=_('ФИО'))
     phone_number = models.CharField(max_length=20, verbose_name=_('Телефон'))
     email = models.EmailField(verbose_name=_('Электронная почта'))
-    contact_info = models.TextField(null=True, verbose_name=_('Контактные данные'))
+    contact_info = models.TextField(null=True,
+                                    verbose_name=_('Контактные данные'))
 
     def __str__(self):
         return self.full_name
@@ -123,11 +125,15 @@ class ShipmentStock(models.Model):
     class Meta:
         unique_together = (("shipment", "stock"),)
 
-    shipment = models.ForeignKey(Shipment, on_delete=models.SET_NULL, null=True)
+    shipment = models.ForeignKey(Shipment,
+                                 on_delete=models.SET_NULL, null=True)
     stock = models.ForeignKey(Stock,
-                                 on_delete=models.SET_NULL,
-                                 null=True)
+                              on_delete=models.SET_NULL,
+                              null=True)
     number = models.IntegerField(verbose_name=_('Количество'))
+
+    def __str__(self):
+        return self.stock.name
 
 
 class CargoStock(models.Model):
@@ -138,6 +144,9 @@ class CargoStock(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.SET_NULL, null=True)
     number = models.IntegerField(verbose_name=_('Количество'))
 
+    def __str__(self):
+        return self.stock.name
+
 
 class SupplierCategory(models.Model):
     class Meta:
@@ -145,5 +154,7 @@ class SupplierCategory(models.Model):
         verbose_name = _('supplier_category')
         verbose_name_plural = _('supplier_categories')
 
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
+    supplier = models.ForeignKey(Supplier,
+                                 on_delete=models.CASCADE, null=True)
+    category = models.ForeignKey(Category,
+                                 on_delete=models.CASCADE, null=True)
