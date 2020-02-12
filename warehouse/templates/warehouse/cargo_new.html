@@ -1,8 +1,12 @@
-{% extends 'warehouse/index.html' %}
+{% extends 'warehouse/base.html' %}
 {% load i18n %}
+{% block title %}
+    {% trans "Сделать поставку" %}
+{% endblock %}
 {% block content %}
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
         <input type="submit" value="{% trans "Выбрать" %}" >
+        </form>
 {% endblock %}

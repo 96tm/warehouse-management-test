@@ -1,12 +1,11 @@
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'warehouse/base.html' %}
 {% load i18n %}
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Покупка подтверждена" %}</title>
-</head>
-<body>
-<h2>{% trans "Покупка подтверждена, спасибо!" %}</h2>
-<a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
-</body>
-</html>
+
+{% block title %}
+    {% trans "Покупка подтверждена" %}
+{% endblock title %}
+
+{% block content %}
+    <h2>{% trans "Покупка подтверждена, спасибо!" %}</h2>
+    <a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
+{% endblock %}

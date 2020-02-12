@@ -17,6 +17,22 @@ def format_date(date):
             .strftime('%Y-%m-%d %H:%M:%S'))
 
 
+class OrderForm(forms.Form):
+    name = forms.ChoiceField(label=_('Ваше имя'))
+    items = forms.ChoiceField(label=_('Выберите товар'))
+    item_count = forms.DecimalField(label=_('Количество товара'),
+                                    initial=1, min_value=1)
+
+    def __init__(self, *args, **kwargs):
+        customers = kwargs.get('initial')['name']
+        customers_list = [(k, v) for k, v in customers]
+        items = kwargs.get('initial')['items']
+        items_list = [(k, v) for k, v in items]
+        super().__init__(*args, **kwargs)
+        self.fields['name'].choices = customers_list
+        self.fields['items'].choices = items_list
+
+
 class CargoNewForm(forms.ModelForm):
 
     class Meta:
@@ -31,8 +47,8 @@ class CargoFillForm(forms.ModelForm):
 
     cargo_supplier = forms.CharField(label=_('Поставщик'))
     cargo_supplier.widget = forms.TextInput(attrs={'readonly': 'readonly'})
-    number = forms.IntegerField(label=_('Количество позиций'), initial=0,
-                                min_value=0)
+    number = forms.IntegerField(label=_('Количество позиций'), initial=1,
+                                min_value=1)
     stock_name = forms.ChoiceField(label=_("Наименование товара"), required=True)
 
     def __init__(self, *args, **kwargs):

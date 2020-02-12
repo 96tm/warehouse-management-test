@@ -8,7 +8,7 @@
                        name="_cancel" value="{% trans "Отменить заказ" %}"
                        {{ onclick_attrib }}>
 
-                 {% if STATUS_VALUE == STATUS_CREATED %}
+                 {% if STATUS_VALUE == STATUS_CREATED and SHIPMENT_AVAILABLE%}
                     <input type="submit" title="{% trans "Подтвердить готовность к отправке" %}"
                             class="default list-group-item active"
                             name="_change_status"

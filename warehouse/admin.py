@@ -2,22 +2,19 @@ import qrcode
 import io
 import uuid
 
-from django.contrib import admin
-
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.translation import gettext as _
-
 from django.core.mail import EmailMessage
-
-
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
-
-from .models import Supplier, Customer, Stock, Category, CargoDetails
-from .models import Shipment, ShipmentStock, Cargo, CargoStock
+from .models import Cargo, CargoStock
 
 from .forms import CustomerForm, SupplierForm
 from .forms import ShipmentForm, CargoForm, StockFormM2M
+
+from .models import Supplier, Customer, Stock, Category
+from .models import Shipment, ShipmentStock
 
 
 # функция gettext с псевдонимом _ применяется к строками
@@ -110,16 +107,18 @@ class CustomerAdmin(admin.ModelAdmin):
     class ShipmentInline(admin.StackedInline):
         form = ShipmentForm
         model = Shipment
+        can_delete = False
         min_num = 0
         max_num = 0
         verbose_name = _("Покупка")
         verbose_name_plural = _("Покупки")
-        can_delete = False
         show_change_link = True
 
     form = CustomerForm
     list_display = ['full_name', 'email', 'phone_number']
+
     inlines = [ShipmentInline, ]
+
     fieldsets = (
         (_('ДАННЫЕ ПОКУПАТЕЛЯ'),
          {'fields': ('full_name', 'phone_number',
@@ -128,6 +127,7 @@ class CustomerAdmin(admin.ModelAdmin):
 
 
 class ShipmentAdmin(admin.ModelAdmin):
+
     class StockInline(admin.StackedInline):
         model = ShipmentStock
         form = StockFormM2M
@@ -145,6 +145,7 @@ class ShipmentAdmin(admin.ModelAdmin):
     # поля для текстового поиска
     search_fields = ['status', 'customer__full_name', ]
     # поля формы изменения погрузки
+
     fieldsets = ((_('ИНФОРМАЦИЯ О ПОКУПКЕ'),
                   {'fields': ('shipment_id', 'customer_name',
                               'number_of_items', 'total',
@@ -153,37 +154,56 @@ class ShipmentAdmin(admin.ModelAdmin):
 
     inlines = [StockInline, ]
 
+    def is_shipment_available(self, obj):
+        for s in ShipmentStock.objects.filter(shipment=obj):
+            if s.stock.number < s.number:
+                return False
+        return True
+
     # убираем кнопку "Добавить погрузку" при отображении списка погрузок
     def has_add_permission(self, request):
         return False
 
     def save_model(self, request, obj, form, change):
+        shipment_available = self.is_shipment_available(obj)
         # нажата кнопка Cancel
         if '_cancel' in request.POST:
             obj.status = Shipment.CANCELLED
         elif obj.status == Shipment.CREATED:
-            obj.status = Shipment.SENT
-            obj.qr = str(obj.id) + str(uuid.uuid4())
-            email = obj.customer.email
-            link = self.get_confirmation_link(request.get_host())
-            body = _('Здравствуйте, подтвердите '
-                     + 'получение покупки: перейдите по ссылке ')
-            body += link + _(' и введите номер из QR-кода во вложении.')
-            self.send_email_to_customer(email, body, obj)
+            # проверка данных клиента на сервере
+            if shipment_available:
+                obj.status = Shipment.SENT
+                # обновляем склад
+                for shipment_stock in obj.shipmentstock_set.all():
+                    shipment_stock.stock.number -= shipment_stock.number
+                    shipment_stock.stock.save()
+                obj.qr = str(obj.id) + str(uuid.uuid4())
+                email = obj.customer.email
+                link = self.get_confirmation_link(request.get_host())
+                body = _('Здравствуйте, подтвердите '
+                         + 'получение покупки: перейдите по ссылке ')
+                body += link + _(' и введите номер из QR-кода во вложении.')
+                self.send_email_to_customer(email, body, obj)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super(ShipmentAdmin, self).save_model(request, obj, form, change)
+        # печатаем сообщение об ошибке
+        if not shipment_available:
+            messages.set_level(request, messages.ERROR)
+            messages.error(request, _('На складе недостаточно товара для данной покупки'))
 
     # добавляем значения в extra_context для дальнейшего использования
     # на странице формы информации о погрузке
     def change_view(self, request, object_id,
                     form_url='', extra_context=None):
         extra = extra_context or {}
+        obj = Shipment.objects.get(pk=object_id)
         extra['STATUS_VALUE'] = Shipment.objects.get(pk=object_id).status
         extra['STATUS_DONE'] = Shipment.DONE
         extra['STATUS_CANCELLED'] = Shipment.CANCELLED
         extra['STATUS_CREATED'] = Shipment.CREATED
         extra['STATUS_SENT'] = Shipment.SENT
+        extra['SHIPMENT_AVAILABLE'] = self.is_shipment_available(obj)
         return super(ShipmentAdmin, self).change_view(request, object_id,
                                                       form_url,
                                                       extra_context=extra)

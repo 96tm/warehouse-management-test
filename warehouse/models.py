@@ -1,10 +1,10 @@
-from django.core.validators import MinValueValidator
-from django.db import models
-import uuid
-from django.db.models import ManyToManyField
-from django.conf import settings
-from django.utils.translation import gettext as _
 import pytz
+
+from django.db import models
+
+from django.conf import settings
+
+from django.utils.translation import gettext as _
 
 
 class Category(models.Model):
@@ -32,9 +32,7 @@ class Supplier(models.Model):
     legal_details = models.TextField(verbose_name=_('Реквизиты'))
     contact_info = models.TextField(null=True,
                                     verbose_name=_('Контактная информация'))
-    categories = models.ManyToManyField(Category, through='SupplierCategory',
-                                        related_name='suppliers')
-    #objects = models.Manager()
+    categories = models.ManyToManyField(Category, through='SupplierCategory')
 
     def __str__(self):
         return self.organization
@@ -137,7 +135,8 @@ class ShipmentStock(models.Model):
         unique_together = (("shipment", "stock"),)
 
     shipment = models.ForeignKey(Shipment,
-                                 on_delete=models.SET_NULL, null=True)
+                                 on_delete=models.SET_NULL,
+                                 null=True)
     stock = models.ForeignKey(Stock,
                               on_delete=models.SET_NULL,
                               null=True)

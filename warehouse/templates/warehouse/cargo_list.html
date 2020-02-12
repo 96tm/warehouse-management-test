@@ -1,9 +1,12 @@
 {% extends 'warehouse/index.html' %}
 {% load i18n %}
+{% block title %}
+    <title>{% trans "Поставки" %}</title>
+{% endblock %}
 {% block content %}
     {% for cargo in cargo_all %}
-    <div>
-        <a href="{% url 'warehouse:cargo_detail' pk=cargo.pk %}">{{ cargo }}</a>
-    </div>
+        <div>
+            <a href="{% url 'warehouse:cargo_detail' pk=cargo.pk %}">{{ cargo }}</a>
+        </div>
     {% endfor %}
 {% endblock %}
