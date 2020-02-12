@@ -34,7 +34,7 @@ class Supplier(models.Model):
                                     verbose_name=_('Контактная информация'))
     categories = models.ManyToManyField(Category, through='SupplierCategory',
                                         related_name='suppliers')
-    objects = models.Manager()
+    #objects = models.Manager()
 
     def __str__(self):
         return self.organization
@@ -88,7 +88,8 @@ class Shipment(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE,
                                  verbose_name=_('Покупатель'))
     status = models.CharField(max_length=9, choices=choices,
-                              verbose_name=_('Статус покупки'))
+                              verbose_name=_('Статус покупки'),
+                              default=CREATED)
     date = models.DateTimeField(auto_now_add=True,
                                 verbose_name=_('Дата покупки'))
     qr = models.TextField(null=True, verbose_name=_('Код подтверждения'))
@@ -110,15 +111,15 @@ class Cargo(models.Model):
     choices = [(DONE, DONE), (IN_TRANSIT, IN_TRANSIT)]
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,
                                  verbose_name=_('Поставщик'))
-    status = models.CharField(max_length=9, choices=choices,
-                              verbose_name=_('Статус'))
+    status = models.CharField(max_length=10, choices=choices,
+                              verbose_name=_('Статус'),
+                              default=IN_TRANSIT)
     date = models.DateTimeField(auto_now_add=True,
                                 verbose_name=_('Дата поставки'))
     stocks = models.ManyToManyField(Stock, through='CargoStock',
                                     verbose_name=_('Товары'))
 
     def __str__(self):
-
         return str(self.pk) + ', ' + str(self.supplier) + ', ' + self.status + ', ' + str(self.date)
 
 

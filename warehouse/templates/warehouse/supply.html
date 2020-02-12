@@ -1,5 +1,5 @@
 {% extends 'warehouse/index.html' %}
-
+{% load i18n %}
 <form action="" method="post">
     {% csrf_token %}
     {{form.as_p}}

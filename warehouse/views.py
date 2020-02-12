@@ -1,10 +1,11 @@
-from .models import Cargo, CargoDetails, Shipment
-from .forms import CargoNewForm, CargoFillForm
+from .models import Cargo, CargoDetails, Shipment, Stock
+from .forms import CargoNewForm, CargoFillForm, CargoForm
 
 from django import forms
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.conf import settings
+from django.contrib import messages
 from django.views.generic import TemplateView
 from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
@@ -27,7 +28,6 @@ def cargo_new(request):
         form = CargoNewForm(request.POST)
         if form.is_valid():
             cargo = form.save()
-            cargo.save()
             return redirect('warehouse:cargo_detail', pk=cargo.pk)
     else:
         form = CargoNewForm()
@@ -35,20 +35,29 @@ def cargo_new(request):
 
 
 def cargo_fill(request, pk):
-    context = {}
-    context['cargo'] = get_object_or_404(Cargo, pk=pk)
-    context['items'] = CargoDetails.objects.filter(order_number=pk)
+    cargo = get_object_or_404(Cargo, pk=pk)
     if request.method == 'POST':
         form = CargoFillForm(request.POST)
         if form.is_valid():
+            form.instance.pk = cargo.pk
+            form.instance.date = cargo.date
+            form.instance.status = cargo.status
+            form.instance.supplier = cargo.supplier
             form.save()
-    context['form'] = CargoFillForm(initial={'order_number': pk})
-    return render(request, 'warehouse/cargo_fill.html', context)
+            messages.info(request, _('Заявка на поставку добавлена'))
+            return redirect('warehouse:index')
+        render(request, 'warehouse/cargo_fill.html', {'form': form})
+    else:
+        form = CargoFillForm()
+        form.fields['cargo_supplier'].initial = cargo.supplier
+        return render(request, 'warehouse/cargo_fill.html', {'form': form,
+                                                             'pk': cargo.pk})
 
 
 def cargo_list(request):
     cargo_all = Cargo.objects.all()
     return render(request, 'warehouse/cargo_list.html', {'cargo_all': cargo_all})
+
 
 def shipment_success(request):
     return render(request, 'warehouse/shipment_success.html')

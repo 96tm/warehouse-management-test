@@ -7,12 +7,18 @@
     <div class="header">
         <div class="header-right">
         <a href="{% url 'warehouse:index' %}">{% trans "Index" %}</a>
-        <a href="{% url 'warehouse:customer' %}">{% trans "Покупка" %}</a>
-        <a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a>
-        <a href="{% url 'warehouse:cargo_list' %}">{% trans "Список заказов" %}</a>
+        <a href="{% url 'warehouse:supplier' %}"> {% trans "Поставка" %} </a>
+      <!--  <a href="{% url 'warehouse:cargo_list' %}">{% trans "Список заказов" %}</a> -->
         <a href="{% url 'warehouse:cargo_new' %}">{% trans "Новый заказ" %}</a>
         </div>
     </div>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </head>
 <body>
 {% block content %}

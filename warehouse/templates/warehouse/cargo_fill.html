@@ -1,13 +1,11 @@
 {% extends 'warehouse/index.html' %}
-
+{% load i18n %}
 {% block content %}
-        <div>Номер заказа: {{ cargo.pk }}. Поставщик: {{ cargo.supplier }}.</div>
-        {% for item in items %}
-                <div>Наименование: {{ item.name }}. Количество: {{ item.quantity}}.</div>
-        {% endfor %}
         <form method="POST">
-
             {% csrf_token %}
+            <label for="cargo_id">{% trans "Номер заявки" %}</label>
+            <input type="text" readonly="readonly" value="{{ pk }}">
             {{ form.as_p }}
-        <input type="submit" value="Добавить позицию">
+            <input type="submit" value="{% trans "Добавить позицию" %}">
+        </form>
 {% endblock %}

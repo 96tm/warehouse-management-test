@@ -1,6 +1,6 @@
 {% extends 'warehouse/index.html' %}
-
-{% block content %}
+    {% load i18n %}
+    {% block content %}
     <h2>Поставка</h2>
     <form action="" method="post">
         {% csrf_token %}
@@ -44,8 +44,9 @@
         </div>
     </form>
 
-<!--{% for supplier in suppliers %}-->
-    <div>
-        {{supplier}}
-    </div>{% endfor %}
+    {% for supplier in suppliers %}
+        <div>
+            {{supplier}}
+        </div>
+    {% endfor %}
 {% endblock %}
