@@ -1,18 +1,17 @@
-import pytz
 import qrcode
 import io
 import uuid
 
-from django import forms
-from django.contrib import admin
-from django.conf import settings
+from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.db.models import Sum
 from django.core.mail import EmailMessage
-
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
+from .models import Cargo, CargoStock
+
+from .forms import CustomerForm, SupplierForm
+from .forms import ShipmentForm, CargoForm, StockFormM2M
 
 from .models import Supplier, Customer, Stock, Category
 from .models import Shipment, ShipmentStock
@@ -21,55 +20,86 @@ from .models import Shipment, ShipmentStock
 # функция gettext с псевдонимом _ применяется к строками
 # для последующего перевода
 
-class ShipmentForm(forms.ModelForm):
-    class Meta:
-        model = Shipment
-        fields = []
 
-    # дополнительные поля для формы
-    number_of_items = forms.CharField(max_length=10,
-                                      label=_('Количество товаров'))
-    total = forms.CharField(max_length=10, label=_('Сумма покупки'))
-    customer_name = forms.CharField(max_length=80, label=_('Покупатель'))
-    shipment_id = forms.CharField(max_length=10, label=_('Номер заказа'))
-    shipment_date = forms.CharField(max_length=19, label=_('Дата заказа'))
-    shipment_status = forms.CharField(max_length=9, label=_('Статус заказа'))
-    shipment_qr = forms.CharField(max_length=50, label=_('Код подтверждения'))
+class CargoAdmin(admin.ModelAdmin):
+    class StockInline(admin.StackedInline):
+        model = CargoStock
+        form = StockFormM2M
+        max_num = 0
+        min_num = 0
+        verbose_name = _('Товар')
+        verbose_name_plural = _('Товары')
+        can_delete = False
 
-    field_order = ['number_of_items', 'total', 'customer_name',
-                   'shipment_id', 'shipment_date',
-                   'shipment_status', 'shipment_qr']
+    form = CargoForm
+    # поля для отображения в списке поставок
+    list_display = ['supplier', 'date', 'status', ]
+    # поля для фильтрации
+    list_filter = ['date', 'supplier', 'status', ]
+    # поля для текстового поиска
+    search_fields = ['supplier__organization', ]
+    fieldsets = ((_('ИНФОРМАЦИЯ О ПОСТАВКЕ'),
+                  {'fields': ('cargo_id', 'cargo_supplier',
+                              'cargo_status', 'cargo_date',
+                              'number', 'total')}), )
+    inlines = [StockInline, ]
 
-    # добавляем инициализацию дополнительных полей при создании формы
-    def __init__(self, *args, **kwargs):
-        super(ShipmentForm, self).__init__(*args, **kwargs)
-        if 'instance' in kwargs and kwargs.get('instance'):
-            current_shipment = kwargs['instance']
-            for key, value in self.fields.items():
-                value.widget = forms.TextInput({'size': '35',
-                                                'readonly': 'readonly'})
-                value.required = False
-            # выбираем записи из many-to-many таблицы shipmentstock,
-            # относящиеся к выбранной погрузке,
-            # к каждой записи добавляем цену соответствующего товара из stocks
-            shipment_stocks = (ShipmentStock
-                               .objects.select_related('stock')
-                               .filter(shipment=current_shipment))
-            # сумма погрузки
-            money = sum([shipment_stock.stock.price * shipment_stock.number
-                         for shipment_stock in shipment_stocks])
-            # общее количество всех товаров погрузки
-            number = (ShipmentStock.objects
-                      .filter(shipment=current_shipment)
-                      .aggregate(Sum('number')))['number__sum']
-            date = (current_shipment.date
-                    .astimezone(tz=pytz.timezone(settings.TIME_ZONE))
-                    .strftime('%Y-%m-%d %H:%M:%S'))
-            values = (number, money, current_shipment.customer.full_name,
-                      current_shipment.id, date, current_shipment.status,
-                      current_shipment.qr)
-            for index, field_name in enumerate(self.field_order):
-                self.fields[field_name].initial = values[index]
+    def has_add_permission(self, request):
+        return False
+
+    def change_view(self, request, object_id,
+                    form_url='', extra_context=None):
+        extra = extra_context or {}
+        extra['STATUS_VALUE'] = Cargo.objects.get(pk=object_id).status
+        extra['STATUS_IN_TRANSIT'] = Cargo.IN_TRANSIT
+        extra['STATUS_DONE'] = Cargo.DONE
+        return super().change_view(request, object_id,
+                                   form_url,
+                                   extra_context=extra)
+
+    def save_model(self, request, obj, form, change):
+        if '_confirm' in request.POST and obj.status == Cargo.IN_TRANSIT:
+            cargo_stocks = CargoStock.objects.filter(cargo=obj)
+            for cs in cargo_stocks:
+                cs.stock.number += cs.number
+                cs.stock.save()
+            obj.status = Cargo.DONE
+        super().save_model(request, obj, form, change)
+
+
+class SupplierAdmin(admin.ModelAdmin):
+    class CargoInline(admin.StackedInline):
+        model = Cargo
+        form = CargoForm
+        min_num = 0
+        max_num = 0
+        can_delete = False
+        show_change_link = True
+
+    form = SupplierForm
+    inlines = [CargoInline, ]
+    list_display = ['organization', 'email', 'phone_number', 'address', ]
+    fieldsets = ((_('ЮРИДИЧЕСКОЕ ЛИЦО'), {'fields':
+                                          ('organization',
+                                           'address',
+                                           'legal_details', )}),
+                 (_('КОНТАКТНЫЕ ДАННЫЕ'), {'fields':
+                                           ('contact_info',
+                                            'phone_number',
+                                            'email', )}),
+                 (_('КАТЕГОРИИ ТОВАРОВ'), {'fields':
+                                           ('supplier_categories', )}))
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.categories.set(form.cleaned_data['supplier_categories'])
+
+    # не отображаем список записей suppliercategory
+    # при подтверждении удаления
+    def get_deleted_objects(self, objs, request):
+        for obj in objs:
+            obj.suppliercategory_set.set([])
+        return super().get_deleted_objects(objs, request)
 
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -84,7 +114,11 @@ class CustomerAdmin(admin.ModelAdmin):
         verbose_name_plural = _("Покупки")
         show_change_link = True
 
+    form = CustomerForm
+    list_display = ['full_name', 'email', 'phone_number']
+
     inlines = [ShipmentInline, ]
+
     fieldsets = (
         (_('ДАННЫЕ ПОКУПАТЕЛЯ'),
          {'fields': ('full_name', 'phone_number',
@@ -93,50 +127,85 @@ class CustomerAdmin(admin.ModelAdmin):
 
 
 class ShipmentAdmin(admin.ModelAdmin):
+
+    class StockInline(admin.StackedInline):
+        model = ShipmentStock
+        form = StockFormM2M
+        max_num = 0
+        min_num = 0
+        verbose_name = _('Товар')
+        verbose_name_plural = _('Товары')
+        can_delete = False
+
     form = ShipmentForm
     # поля для отображения в списке погрузок
-    list_display = ['date', 'customer', 'status', 'qr', ]
+    list_display = ['customer', 'date', 'status', 'qr', ]
     # поля для фильтрации
     list_filter = ['date', 'customer', 'status', ]
     # поля для текстового поиска
     search_fields = ['status', 'customer__full_name', ]
     # поля формы изменения погрузки
-    fields = ['shipment_id', 'customer_name', 'number_of_items',
-              'total', 'shipment_status', 'shipment_date', 'shipment_qr', ]
+
+    fieldsets = ((_('ИНФОРМАЦИЯ О ПОКУПКЕ'),
+                  {'fields': ('shipment_id', 'customer_name',
+                              'number_of_items', 'total',
+                              'shipment_status', 'shipment_date',
+                              'shipment_qr', )}), )
+
+    inlines = [StockInline, ]
+
+    def is_shipment_available(self, obj):
+        for s in ShipmentStock.objects.filter(shipment=obj):
+            if s.stock.number < s.number:
+                return False
+        return True
 
     # убираем кнопку "Добавить погрузку" при отображении списка погрузок
     def has_add_permission(self, request):
         return False
 
     def save_model(self, request, obj, form, change):
+        shipment_available = self.is_shipment_available(obj)
         # нажата кнопка Cancel
         if '_cancel' in request.POST:
             obj.status = Shipment.CANCELLED
         elif obj.status == Shipment.CREATED:
-            obj.status = Shipment.SENT
-            obj.qr = str(obj.id) + str(uuid.uuid4())
-            email = obj.customer.email
-            link = self.get_confirmation_link(request.get_host())
-            body = _('Здравствуйте, подтвердите '
-                     + 'получение покупки: перейдите по ссылке ')
-            body += link + _(' и введите номер из QR-кода во вложении.')
-            self.send_email_to_customer(email, body, obj)
+            # проверка данных клиента на сервере
+            if shipment_available:
+                obj.status = Shipment.SENT
+                # обновляем склад
+                for shipment_stock in obj.shipmentstock_set.all():
+                    shipment_stock.stock.number -= shipment_stock.number
+                    shipment_stock.stock.save()
+                obj.qr = str(obj.id) + str(uuid.uuid4())
+                email = obj.customer.email
+                link = self.get_confirmation_link(request.get_host())
+                body = _('Здравствуйте, подтвердите '
+                         + 'получение покупки: перейдите по ссылке ')
+                body += link + _(' и введите номер из QR-кода во вложении.')
+                self.send_email_to_customer(email, body, obj)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super(ShipmentAdmin, self).save_model(request, obj, form, change)
+        # печатаем сообщение об ошибке
+        if not shipment_available:
+            messages.set_level(request, messages.ERROR)
+            messages.error(request, _('На складе недостаточно товара для данной покупки'))
 
     # добавляем значения в extra_context для дальнейшего использования
     # на странице формы информации о погрузке
     def change_view(self, request, object_id,
                     form_url='', extra_context=None):
         extra = extra_context or {}
+        obj = Shipment.objects.get(pk=object_id)
         extra['STATUS_VALUE'] = Shipment.objects.get(pk=object_id).status
         extra['STATUS_DONE'] = Shipment.DONE
         extra['STATUS_CANCELLED'] = Shipment.CANCELLED
         extra['STATUS_CREATED'] = Shipment.CREATED
         extra['STATUS_SENT'] = Shipment.SENT
+        extra['SHIPMENT_AVAILABLE'] = self.is_shipment_available(obj)
         return super(ShipmentAdmin, self).change_view(request, object_id,
-                                                      form_url='',
+                                                      form_url,
                                                       extra_context=extra)
 
     def get_qr(self, link):
@@ -162,8 +231,10 @@ class ShipmentAdmin(admin.ModelAdmin):
         message.send()
 
 
-admin.site.register(Supplier)
+admin.site.register(Supplier, SupplierAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Stock)
 admin.site.register(Category)
+#admin.site.register(CargoDetails)
 admin.site.register(Shipment, ShipmentAdmin)
+admin.site.register(Cargo, CargoAdmin)

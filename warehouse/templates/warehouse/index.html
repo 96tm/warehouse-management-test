@@ -1,12 +1,24 @@
-<!DOCTYPE html>
-<html lang="ru">
+{% extends 'warehouse/base.html' %}
 {% load i18n %}
-<head>
-    <meta charset="UTF-8">
-    <title>{% trans "Склад" %}</title>
-</head>
-<body>
-    <div><a href="{% url 'warehouse:order' %}">{% trans "Покупка" %}</a></div>
-    <div><a href="{% url 'warehouse:supplier' %}">{% trans "Поставка" %}</a></div>
-</body>
-</html>
+{% load admin_urls %}
+    {% block title %}
+        {% trans "Склад" %}
+    {% endblock %}
+    {% block head %}
+        <div class="header">
+            <div class="header-right">
+            <a href="{% url 'warehouse:index' %}">{% trans "Index" %}</a>
+            <a href="{% url 'warehouse:order' %}"> {% trans "Покупка" %} </a>
+          <!--  <a href="{% url 'warehouse:cargo_list' %}">{% trans "Список заказов" %}</a> -->
+            <a href="{% url 'warehouse:cargo_new' %}">{% trans "Поставка" %}</a>
+            <a href="{% url "admin:index"%}">{% trans "Склад" %}</a>
+            </div>
+        </div>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock %}

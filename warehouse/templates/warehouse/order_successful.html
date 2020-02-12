@@ -1,15 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Заказ принят</title>
-</head>
-<body>
-<p>Ваш заказ принят!</p>
-<p>Данные по заказу:</p>
-<p>Имя заказчика: {{ customer_name }}</p>
-<p>ИД заказчика: {{ customer_id }}</p>
-<p>Заказано: {{ product_name }}</p>
-<p>Количество: {{ product_count }}</p>
-</body>
-</html>
+{% extends 'warehouse/base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Заказ принят" %}
+{% endblock %}
+
+{% block content %}
+    <p>{% trans "Ваш заказ принят!" %}</p>
+    <h3>{% trans "Данные по заказу" %}</h3>
+    <p>{% trans "Заказчик: " %} {{ customer_name }}</p>
+    <p>{% trans "ИД заказчика: " %} {{ customer_id }}</p>
+    <p>{% trans "Заказано: " %} {{ product_name }}</p>
+    <p>{% trans "Количество: " %} {{ product_count }}</p>
+    <a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
+{% endblock %}

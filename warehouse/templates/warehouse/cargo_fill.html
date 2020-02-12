@@ -1,0 +1,14 @@
+{% extends 'warehouse/base.html' %}
+{% load i18n %}
+{% block title %}
+    {% trans "Сделать поставку" %}
+{% endblock %}
+{% block content %}
+        <form method="POST">
+            {% csrf_token %}
+            <label for="cargo_id">{% trans "Номер заявки" %}</label>
+            <input type="text" readonly="readonly" value="{{ pk }}">
+            {{ form.as_p }}
+            <input type="submit" value="{% trans "Добавить позицию" %}">
+        </form>
+{% endblock %}

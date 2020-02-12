@@ -1,14 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Сделать заказ</title>
-</head>
-<body>
+{% extends 'warehouse/base.html' %}
+{% load i18n %}
+
+    {% block title %}
+        {% trans "Сделать заказ" %}
+    {% endblock %}
+
+{% block content %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-    <input type="submit" value="Send message">
+    <input type="submit" value="{% trans "Отправить заявку" %}">
 </form>
-</body>
-</html>
+{% endblock %}

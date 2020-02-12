@@ -1,14 +1,19 @@
 from django import forms
+from django.contrib import messages
 from django.urls import reverse
 from django.conf import settings
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView
 from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
-from .forms import OrderForm
+
 from django.views.generic.edit import FormView
 from django.views.generic import View
-from .models import Customer, Stock, Shipment, ShipmentStock
+
+from .models import Customer, Stock
+from .models import Cargo, Shipment, ShipmentStock
+from .forms import OrderForm, CargoNewForm, CargoFillForm
+
 
 def index(request):
     return render(request, 'warehouse/index.html')
@@ -30,18 +35,18 @@ class OrderView(FormView):
             'product_name': product.name,
             'product_count': data['item_count'],
         }
-        sh = Shipment.objects.create(customer=customer,
-                                     status='Проверка')
-        sh.save
-        sh_stock = ShipmentStock.objects.create(shipment=sh,
-                                                stock=product,
-                                                number=int(data['item_count']))
-        sh_stock.save
+        sh = Shipment.objects.create(customer=customer)
+        ShipmentStock.objects.create(shipment=sh,
+                                     stock=product,
+                                     number=int(data['item_count']))
         return render(self.request, 'warehouse/order_successful.html', context)
 
     def get_initial(self):
         initial = super(OrderView, self).get_initial()
-        customers_list = Customer.objects.all().order_by('full_name').values_list('id', 'full_name')
+        customers_list = (Customer.objects
+                          .all()
+                          .order_by('full_name')
+                          .values_list('id', 'full_name'))
         items_list = Stock.objects.all().values_list('article', 'name')
         initial.update({'name': customers_list,
                         'items': items_list})
@@ -55,8 +60,40 @@ class OrderSuccessfulView(View):
         return render(request, 'warehouse/order_successful.html')
 
 
-def supplier(request):
-    return render(request, 'warehouse/supplier.html')
+def cargo_new(request):
+    if request.method == "POST":
+        form = CargoNewForm(request.POST)
+        if form.is_valid():
+            cargo = form.save()
+            return redirect('warehouse:cargo_detail', pk=cargo.pk)
+    else:
+        form = CargoNewForm()
+    return render(request, 'warehouse/cargo_new.html', {'form': form})
+
+
+def cargo_fill(request, pk):
+    cargo = get_object_or_404(Cargo, pk=pk)
+    if request.method == 'POST':
+        form = CargoFillForm(request.POST)
+        if form.is_valid():
+            form.instance.pk = cargo.pk
+            form.instance.date = cargo.date
+            form.instance.status = cargo.status
+            form.instance.supplier = cargo.supplier
+            form.save()
+            messages.info(request, _('Заявка отправлена'))
+            return redirect('warehouse:index')
+        render(request, 'warehouse/cargo_fill.html', {'form': form})
+    else:
+        form = CargoFillForm()
+        form.fields['cargo_supplier'].initial = cargo.supplier
+        return render(request, 'warehouse/cargo_fill.html', {'form': form,
+                                                             'pk': cargo.pk})
+
+
+def cargo_list(request):
+    cargo_all = Cargo.objects.all()
+    return render(request, 'warehouse/cargo_list.html', {'cargo_all': cargo_all})
 
 
 def shipment_success(request):
