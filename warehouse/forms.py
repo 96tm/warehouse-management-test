@@ -34,7 +34,6 @@ class OrderForm(forms.Form):
 
 
 class CargoNewForm(forms.ModelForm):
-
     class Meta:
         model = Cargo
         fields = ('supplier', )
@@ -148,6 +147,21 @@ class ShipmentForm(forms.ModelForm):
                       current_shipment.qr)
             for index, field_name in enumerate(self.field_order):
                 self.fields[field_name].initial = values[index]
+
+
+class StockForm(forms.Form):
+    name = forms.ChoiceField(required=True, label=_("Товар"))
+    number = forms.IntegerField(min_value=1,
+                                required=True,
+                                label=_("Количество"))
+    number.widget = forms.NumberInput(attrs={'required': 'required',
+                                             'value': '1'})
+    CHOICES = list(Stock.objects.values_list('name', 'name'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].choices = self.CHOICES
+        self.fields['number'].initial = 1
 
 
 class StockFormM2M(forms.ModelForm):

@@ -1,12 +1,43 @@
+{% load i18n %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/base.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
     <title>{% block title %} {% endblock %} </title>
     {% block head %}
     {% endblock %}
 </head>
 <body>
+    <div id="header">
+        <div id="branding">
+            <h1 id="site-name">
+                {% block header-name %}
+                    {% trans "Склад" %}
+                {% endblock %}
+            </h1>
+        </div>
+        <div id="user-tools">
+            <a href="{% url 'warehouse:index' %}">{% trans "Главная страница" %}</a>
+            /
+            <a href="{% url 'warehouse:cargo_new' %}">{% trans "Отправить поставку" %}</a>
+            /
+            <a href="{% url 'warehouse:order' %}">{% trans "Сделать покупку" %}</a>
+            /
+            <a href="{% url 'admin:index' %}">{% trans "Управление складом" %}</a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+                <li class="success">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
     {% block content %}
     {% endblock %}
 </body>

@@ -2,13 +2,20 @@
 {% load i18n %}
 
     {% block title %}
-        {% trans "Сделать заказ" %}
+        {% trans "Покупка" %}
+    {% endblock %}
+    {% block header-name %}
+        {% trans "Покупка" %}
     {% endblock %}
 
 {% block content %}
-    <form method="post">
+    <form method="POST">
         {% csrf_token %}
         {{ form.as_p }}
-    <input type="submit" value="{% trans "Отправить заявку" %}">
-</form>
+         <div class="submit-row">
+            <p class="deletelink-box">
+                <input type="submit" class="default" value="{% trans "Отправить заявку на покупку" %}">
+            </p>
+         </div>
+    </form>
 {% endblock %}
