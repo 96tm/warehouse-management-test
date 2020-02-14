@@ -1,3 +1,4 @@
+from collections import Counter
 from django import forms
 from django.contrib import messages
 from django.urls import reverse
@@ -10,9 +11,9 @@ from django.utils.translation import gettext as _
 from django.views.generic.edit import FormView
 from django.views.generic import View
 
-from .models import Customer, Stock
+from .models import Customer, Stock, CargoStock
 from .models import Cargo, Shipment, ShipmentStock
-from .forms import OrderForm, CargoNewForm, CargoFillForm
+from .forms import OrderForm, CargoNewForm, CargoFillForm, StockForm
 
 
 def index(request):
@@ -61,14 +62,42 @@ class OrderSuccessfulView(View):
 
 
 def cargo_new(request):
-    if request.method == "POST":
+    stock_formset = forms.formset_factory(form=StockForm,
+                                          max_num=50,
+                                          min_num=1,
+                                          extra=0)
+    if request.method == 'POST':
         form = CargoNewForm(request.POST)
-        if form.is_valid():
+        formset = stock_formset(request.POST)
+        context = {'form': form, 'formset': formset}
+        if form.is_valid() and formset.is_valid() and formset.cleaned_data:
             cargo = form.save()
-            return redirect('warehouse:cargo_detail', pk=cargo.pk)
+            stocks = {}
+            for stock in formset.cleaned_data:
+                name = stock['name']
+                stocks[name] = stocks.get(name, 0) + stock['number']
+            for name, number in stocks.items():
+                stock = Stock.objects.get(name=name)
+                CargoStock.objects.create(cargo=cargo,
+                                          stock=stock,
+                                          number=number)
+            messages.info(request, _('Заявка отправлена'))
+            return redirect(to='warehouse:index')
+        else:
+            return render(request, 'warehouse/cargo_new.html', context)
     else:
         form = CargoNewForm()
-    return render(request, 'warehouse/cargo_new.html', {'form': form})
+        formset = stock_formset()
+        context = {'form': form, 'formset': formset}
+        return render(request, 'warehouse/cargo_new.html', context)
+    # if request.method == "POST":
+    #     form = CargoNewForm(request.POST)
+    #     if form.is_valid():
+    #         cargo = form.save()
+    #         return redirect('warehouse:cargo_detail', pk=cargo.pk)
+    # else:
+    #     form = CargoNewForm()
+    # return render(request, 'warehouse/cargo_new.html', {'form': form})
 
 
 def cargo_fill(request, pk):
