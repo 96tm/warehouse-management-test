@@ -156,11 +156,11 @@ class StockForm(forms.Form):
                                 label=_("Количество"))
     number.widget = forms.NumberInput(attrs={'required': 'required',
                                              'value': '1'})
-    CHOICES = list(Stock.objects.values_list('name', 'name'))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['name'].choices = self.CHOICES
+        choices = list(Stock.objects.values_list('name', 'name'))
+        self.fields['name'].choices = choices
         self.fields['number'].initial = 1
 
 
