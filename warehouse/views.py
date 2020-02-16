@@ -1,7 +1,8 @@
 from collections import Counter
 from django import forms
 from django.contrib import messages
-from django.urls import reverse
+from django.forms import formset_factory
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView
@@ -13,45 +14,86 @@ from django.views.generic import View
 
 from .models import Customer, Stock, CargoStock
 from .models import Cargo, Shipment, ShipmentStock
-from .forms import OrderForm, CargoNewForm, CargoFillForm, StockForm
+from .forms import CargoNewForm, CargoFillForm, StockForm, OrderCustomerForm, OrderItemForm, OrderCustomerSelectForm
 
 
 def index(request):
     return render(request, 'warehouse/index.html')
 
 
-class OrderView(FormView):
-    template_name = "warehouse/order.html"
-    form_class = OrderForm
-    # success_url = "order_successful"
+# class OrderView(FormView):
+#     template_name = "warehouse/order.html"
+#     form_class = OrderForm
+#     # success_url = "order_successful"
+#
+#     def form_valid(self, form):
+#         # return super(OrderView, self).form_valid(form)
+#         data = form.cleaned_data
+#         customer = Customer.objects.get(id=data['name'])
+#         product = Stock.objects.get(article=data['items'])
+#         context = {
+#             'customer_name': customer.full_name,
+#             'customer_id': customer.id,
+#             'product_name': product.name,
+#             'product_count': data['item_count'],
+#         }
+#         sh = Shipment.objects.create(customer=customer)
+#         ShipmentStock.objects.create(shipment=sh,
+#                                      stock=product,
+#                                      number=int(data['item_count']))
+#         return render(self.request, 'warehouse/order_successful.html', context)
+#
+#     def get_initial(self):
+#         initial = super(OrderView, self).get_initial()
+#         customers_list = (Customer.objects
+#                           .all()
+#                           .order_by('full_name')
+#                           .values_list('id', 'full_name'))
+#         items_list = Stock.objects.all().values_list('article', 'name')
+#         initial.update({'name': customers_list,
+#                         'items': items_list})
+#         return initial
+class OrderView(View):
+    OrderItemFormSet = formset_factory(OrderItemForm)
 
-    def form_valid(self, form):
-        # return super(OrderView, self).form_valid(form)
-        data = form.cleaned_data
-        customer = Customer.objects.get(id=data['name'])
-        product = Stock.objects.get(article=data['items'])
+    def post(self, request):
+        customer_form = OrderCustomerForm(request.POST)
+        item_formset = self.OrderItemFormSet(request.POST)
+        customer_selectform = OrderCustomerSelectForm(request.POST)
         context = {
-            'customer_name': customer.full_name,
-            'customer_id': customer.id,
-            'product_name': product.name,
-            'product_count': data['item_count'],
+            'customer_form': customer_form,
+            'item_formset': item_formset,
+            'customer_selectform': customer_selectform,
         }
-        sh = Shipment.objects.create(customer=customer)
-        ShipmentStock.objects.create(shipment=sh,
-                                     stock=product,
-                                     number=int(data['item_count']))
-        return render(self.request, 'warehouse/order_successful.html', context)
 
-    def get_initial(self):
-        initial = super(OrderView, self).get_initial()
-        customers_list = (Customer.objects
-                          .all()
-                          .order_by('full_name')
-                          .values_list('id', 'full_name'))
-        items_list = Stock.objects.all().values_list('article', 'name')
-        initial.update({'name': customers_list,
-                        'items': items_list})
-        return initial
+        if request.POST.get('reg'):
+            if customer_selectform.is_valid():
+                customer = Customer.objects.get(pk=customer_selectform.cleaned_data.get('customers').pk)
+        else:
+            if customer_form.is_valid():
+                customer = customer_form.save()
+
+        sh = Shipment.objects.create(customer=customer)
+
+        if item_formset.is_valid():
+            for form in item_formset:
+                product = Stock.objects.get(pk=form.cleaned_data.get('item').pk)
+                ShipmentStock.objects.create(shipment=sh,
+                                                     stock=product,
+                                                     number=int(form.cleaned_data.get('count')))
+
+        return render(request, 'warehouse/order.html', context)
+
+    def get(self, request):
+        customer_form = OrderCustomerForm
+        item_formset = self.OrderItemFormSet
+        customer_selectform = OrderCustomerSelectForm
+        context = {
+            'customer_form': customer_form,
+            'item_formset': item_formset,
+            'customer_selectform': customer_selectform,
+        }
+        return render(request, 'warehouse/order.html', context)
 
 
 class OrderSuccessfulView(View):
