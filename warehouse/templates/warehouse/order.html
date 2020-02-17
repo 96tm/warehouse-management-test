@@ -24,26 +24,21 @@
     </table>
     {{ item_formset.management_form }}
         <fieldset class="module aligned">
-        <h2> {% trans "Выберите товары" %}</h2>
-            {% for item_form in item_formset %}
-                <div class="form-row item-formset">
-                    {{ item_form.item }}
-                    {{ item_form.count }}
+            <h2> {% trans "Выберите товары" %}</h2>
+            {% for form in item_formset %}
+                <div class="form-row order-formset">
+                    {{ form.item }}
+                    {{ form.count }}
                 </div>
             {% endfor %}
         </fieldset>
-     <div class="submit-row">
-        <p class="deletelink-box">
-            <input type="submit" class="default" value="{% trans "Отправить заявку на покупку" %}">
-        </p>
-     </div>
+         <div class="submit-row">
+            <p class="deletelink-box">
+                <input type="submit" class="default" value="{% trans 'Отправить заявку на покупку' %}">
+            </p>
+         </div>
 </form>
     <script src="{% static 'warehouse/js/jquery-1.3.2.min.js' %}"></script>
     <script src="{% static 'warehouse/js/jquery.formset.js' %}"></script>
-<script>
-    $('.item-formset').formset({
-        addText: 'add link',
-        deleteText: 'remove'
-    });
-</script>
+    <script src="{% static 'warehouse/js/order-formset.js' %}"></script>
 {% endblock %}

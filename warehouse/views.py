@@ -14,8 +14,8 @@ from django.views.decorators.cache import never_cache
 
 from .models import Customer, Stock, CargoStock
 from .models import Cargo, Shipment, ShipmentStock, CargoDetails
-from .forms import OrderForm, CargoNewForm, CargoFillForm
-from .forms import StockForm, OrderFormsetsForm
+from .forms import CargoNewForm, CargoFillForm
+from .forms import StockForm, OrderFormsetsForm, CustomerForm
 from .models import Cargo, Shipment, ShipmentStock
 from .forms import CargoNewForm, CargoFillForm, StockForm, OrderCustomerForm, OrderItemForm, OrderCustomerSelectForm
 
@@ -106,49 +106,9 @@ class OrderFormsetsView(View):
         return render(request, self.template, context=context)
 
 
-class OrderView(FormView):
-    """
-    Class-based view для обработки страницы
-    поставки с добавлением одного товара
-    в одной форме
-    """
-    template_name = "warehouse/order.html"
-    form_class = OrderForm
-    # success_url = "order_successful"
-# class OrderView(FormView):
-#     template_name = "warehouse/order.html"
-#     form_class = OrderForm
-#     # success_url = "order_successful"
-#
-#     def form_valid(self, form):
-#         # return super(OrderView, self).form_valid(form)
-#         data = form.cleaned_data
-#         customer = Customer.objects.get(id=data['name'])
-#         product = Stock.objects.get(article=data['items'])
-#         context = {
-#             'customer_name': customer.full_name,
-#             'customer_id': customer.id,
-#             'product_name': product.name,
-#             'product_count': data['item_count'],
-#         }
-#         sh = Shipment.objects.create(customer=customer)
-#         ShipmentStock.objects.create(shipment=sh,
-#                                      stock=product,
-#                                      number=int(data['item_count']))
-#         return render(self.request, 'warehouse/order_successful.html', context)
-#
-#     def get_initial(self):
-#         initial = super(OrderView, self).get_initial()
-#         customers_list = (Customer.objects
-#                           .all()
-#                           .order_by('full_name')
-#                           .values_list('id', 'full_name'))
-#         items_list = Stock.objects.all().values_list('article', 'name')
-#         initial.update({'name': customers_list,
-#                         'items': items_list})
-#         return initial
+@method_decorator(never_cache, name='dispatch')
 class OrderView(View):
-    OrderItemFormSet = formset_factory(OrderItemForm)
+    OrderItemFormSet = formset_factory(OrderItemForm, min_num=1)
 
     def post(self, request):
         customer_form = OrderCustomerForm(request.POST)
@@ -188,16 +148,6 @@ class OrderView(View):
             'customer_selectform': customer_selectform,
         }
         return render(request, 'warehouse/order.html', context)
-    def get_initial(self):
-        initial = super().get_initial()
-        customers_list = (Customer.objects
-                          .all()
-                          .order_by('full_name')
-                          .values_list('id', 'full_name'))
-        items_list = Stock.objects.all().values_list('article', 'name')
-        initial.update({'name': customers_list,
-                        'items': items_list})
-        return initial
 
 
 class OrderSuccessfulView(View):
