@@ -1,4 +1,5 @@
 {% extends 'warehouse/base.html' %}
+{% load static %}
 {% load i18n %}
 
     {% block title %}
@@ -9,13 +10,40 @@
     {% endblock %}
 
 {% block content %}
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-         <div class="submit-row">
-            <p class="deletelink-box">
-                <input type="submit" class="default" value="{% trans "Отправить заявку на покупку" %}">
-            </p>
-         </div>
-    </form>
+<form method="POST">
+    {% csrf_token %}
+    <table id="customer-tbl" cellspacing="0" cellpadding="4" bgcolor="lime" border>
+        <tr>
+            <td>Уже зарегистрирован</td>
+            <td><input type="checkbox" id="id_reg" name="reg" checked></td>
+        </tr>
+        <tr>
+            <td>{{ customer_selectform.customers }}</td>
+            <td>Зарегиться {{ customer_form.as_p }}</td>
+        </tr>
+    </table>
+    {{ item_formset.management_form }}
+        <fieldset class="module aligned">
+        <h2> {% trans "Выберите товары" %}</h2>
+            {% for item_form in item_formset %}
+                <div class="form-row item-formset">
+                    {{ item_form.item }}
+                    {{ item_form.count }}
+                </div>
+            {% endfor %}
+        </fieldset>
+     <div class="submit-row">
+        <p class="deletelink-box">
+            <input type="submit" class="default" value="{% trans "Отправить заявку на покупку" %}">
+        </p>
+     </div>
+</form>
+    <script src="{% static 'warehouse/js/jquery-1.3.2.min.js' %}"></script>
+    <script src="{% static 'warehouse/js/jquery.formset.js' %}"></script>
+<script>
+    $('.item-formset').formset({
+        addText: 'add link',
+        deleteText: 'remove'
+    });
+</script>
 {% endblock %}

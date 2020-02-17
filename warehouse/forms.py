@@ -17,20 +17,46 @@ def format_date(date):
             .strftime('%Y-%m-%d %H:%M:%S'))
 
 
-class OrderForm(forms.Form):
-    name = forms.ChoiceField(label=_('Ваше имя'))
-    items = forms.ChoiceField(label=_('Выберите товар'))
-    item_count = forms.DecimalField(label=_('Количество товара'),
-                                    initial=1, min_value=1)
+# class OrderForm(forms.Form):
+#     name = forms.ChoiceField(label=_('Ваше имя'))
+#     items = forms.ChoiceField(label=_('Выберите товар'))
+#     item_count = forms.DecimalField(label=_('Количество товара'),
+#                                     initial=1, min_value=1)
+#
+#     def __init__(self, *args, **kwargs):
+#         customers = kwargs.get('initial')['name']
+#         customers_list = [(k, v) for k, v in customers]
+#         items = kwargs.get('initial')['items']
+#         items_list = [(k, v) for k, v in items]
+#         super().__init__(*args, **kwargs)
+#         self.fields['name'].choices = customers_list
+#         self.fields['items'].choices = items_list
+class OrderCustomerForm(forms.ModelForm):
+    full_name = forms.CharField(required=False, label='ФИО')
+    email = forms.EmailField(required=False, label='E-mail')
+    contact_info = forms.CharField(required=False, label='Контактная информация', widget=forms.Textarea())
+    phone_number = forms.CharField(required=False, label='Телефон')
 
-    def __init__(self, *args, **kwargs):
-        customers = kwargs.get('initial')['name']
-        customers_list = [(k, v) for k, v in customers]
-        items = kwargs.get('initial')['items']
-        items_list = [(k, v) for k, v in items]
-        super().__init__(*args, **kwargs)
-        self.fields['name'].choices = customers_list
-        self.fields['items'].choices = items_list
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+
+class OrderCustomerSelectForm(forms.Form):
+    customers = forms.ModelChoiceField(queryset=Customer.objects.all(),
+                                       required=False)
+
+
+class OrderItemForm(forms.Form):
+    item = forms.ModelChoiceField(queryset=Stock.objects.all(), required=True)
+    count = forms.DecimalField(required=True, initial=1, min_value=1)
+
+    # def __init__(self, *args, **kwargs):
+    #     super(OrderItemForm, self).__init__(*args, **kwargs)
+    #     item_list = [(k, v) for k, v in Stock.objects.all().values_list('pk', 'name')]
+    #     self.fields['item'].choices = item_list
+
+
 
 
 class CargoNewForm(forms.ModelForm):
