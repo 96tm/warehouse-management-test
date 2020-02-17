@@ -10,15 +10,32 @@ from email.mime.base import MIMEBase
 from email.encoders import encode_base64
 from .models import Cargo, CargoStock
 
-from .forms import CustomerForm, SupplierForm
+from .forms import CustomerForm, SupplierForm, CategoryForm
 from .forms import ShipmentForm, CargoForm, StockFormM2M
 
 from .models import Supplier, Customer, Stock, Category
 from .models import Shipment, ShipmentStock
+from .models import get_parent_name, get_shipment_total
 
 
 # функция gettext с псевдонимом _ применяется к строками
 # для последующего перевода
+
+
+class StockAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'price', 'number', )
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    form = CategoryForm
+    fields = ('name', 'parent_name')
+    parent_name = get_parent_name
+    parent_name.short_description = _('Базовая категория')
+    list_display = ('name', parent_name, )
+
+    def save_model(self, request, obj, form, change):
+        obj.parent_id = form.cleaned_data['parent_name']
+        super().save_model(request, obj, form, change)
 
 
 class CargoAdmin(admin.ModelAdmin):
@@ -110,8 +127,8 @@ class CustomerAdmin(admin.ModelAdmin):
         can_delete = False
         min_num = 0
         max_num = 0
-        verbose_name = _("Покупка")
-        verbose_name_plural = _("Покупки")
+        verbose_name = _("Заказ")
+        verbose_name_plural = _("Заказы")
         show_change_link = True
 
     form = CustomerForm
@@ -139,26 +156,23 @@ class ShipmentAdmin(admin.ModelAdmin):
 
     form = ShipmentForm
     # поля для отображения в списке погрузок
-    list_display = ['customer', 'date', 'status', 'qr', ]
+    shipment_total = get_shipment_total
+    shipment_total.short_description = _('Сумма покупки')
+    list_display = ['customer', 'date', 'status', shipment_total, 'qr', ]
     # поля для фильтрации
     list_filter = ['date', 'customer', 'status', ]
     # поля для текстового поиска
     search_fields = ['status', 'customer__full_name', ]
-    # поля формы изменения погрузки
-
     fieldsets = ((_('ИНФОРМАЦИЯ О ПОКУПКЕ'),
                   {'fields': ('shipment_id', 'customer_name',
                               'number_of_items', 'total',
                               'shipment_status', 'shipment_date',
                               'shipment_qr', )}), )
-
     inlines = [StockInline, ]
 
     def is_shipment_available(self, obj):
-        for s in ShipmentStock.objects.filter(shipment=obj):
-            if s.stock.number < s.number:
-                return False
-        return True
+        return all(s.stock.number > s.number
+                   for s in ShipmentStock.objects.filter(shipment=obj))
 
     # убираем кнопку "Добавить погрузку" при отображении списка погрузок
     def has_add_permission(self, request):
@@ -186,7 +200,7 @@ class ShipmentAdmin(admin.ModelAdmin):
                 self.send_email_to_customer(email, body, obj)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
-        super(ShipmentAdmin, self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
         # печатаем сообщение об ошибке
         if not shipment_available:
             messages.set_level(request, messages.ERROR)
@@ -204,9 +218,8 @@ class ShipmentAdmin(admin.ModelAdmin):
         extra['STATUS_CREATED'] = Shipment.CREATED
         extra['STATUS_SENT'] = Shipment.SENT
         extra['SHIPMENT_AVAILABLE'] = self.is_shipment_available(obj)
-        return super(ShipmentAdmin, self).change_view(request, object_id,
-                                                      form_url,
-                                                      extra_context=extra)
+        return super().change_view(request, object_id,
+                                   form_url, extra_context=extra)
 
     def get_qr(self, link):
         qr = qrcode.make(link)
@@ -233,8 +246,8 @@ class ShipmentAdmin(admin.ModelAdmin):
 
 admin.site.register(Supplier, SupplierAdmin)
 admin.site.register(Customer, CustomerAdmin)
-admin.site.register(Stock)
-admin.site.register(Category)
+admin.site.register(Stock, StockAdmin)
+admin.site.register(Category, CategoryAdmin)
 #admin.site.register(CargoDetails)
 admin.site.register(Shipment, ShipmentAdmin)
 admin.site.register(Cargo, CargoAdmin)

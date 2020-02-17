@@ -33,7 +33,11 @@
     {% if messages %}
         <ul class="messagelist">
             {% for message in messages %}
-                <li class="success">{{ message }}</li>
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <li class="error">{{ message }}</li>
+                {% else %}
+                    <li class="success">{{ message }}</li>
+                {% endif %}
             {% endfor %}
         </ul>
     {% endif %}

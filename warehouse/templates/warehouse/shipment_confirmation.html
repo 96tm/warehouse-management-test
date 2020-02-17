@@ -5,15 +5,27 @@
     {% trans "Подтверждение получения покупки" %}
 {% endblock title %}
 
+{% block header-name %}
+    {% trans "Подтверждение получения покупки" %}
+{% endblock %}
+
 {% block content %}
     <form method="POST" action="{% url 'warehouse:shipment_confirmation' %}"
               name="shipment_confirmation_form">
-        <input type="text" name="shipment_key"
-               size="35" placeholder="{% trans "Введите ключ из полученного email" %}">
-        <input type="submit" name="submit_button"
-               value="{% trans "Отправить" %}"
-               title="{% trans "Отправить" %}">
         {% csrf_token %}
+        <formset class="module aligned">
+            <div class="form-row">
+            <input type="text" name="shipment_key"
+                   size="35" placeholder="{% trans "Введите ключ из полученного email" %}">
+            </div>
+        </formset>
+        <div class="submit-row">
+            <p class="deletelink-box">
+                <input type="submit" name="submit_button"  class="default"
+                       value="{% trans "Отправить" %}"
+                       title="{% trans "Отправить" %}">
+            </p>
+        </div>
     </form>
 
     {% if error_messages %}

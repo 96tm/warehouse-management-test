@@ -2,10 +2,19 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Покупка подтверждена" %}
+    {% trans "Подтверждение получения покупки" %}
 {% endblock title %}
 
+{% block header-name %}
+    {% trans "Подтверждение получения покупки" %}
+{% endblock header-name %}
+
 {% block content %}
-    <h2>{% trans "Покупка подтверждена, спасибо!" %}</h2>
-    <a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
+    <div class="submit-row">
+        <p class="deletelink-box">
+            <a  href="{% url 'warehouse:index' %}" class="button default">
+                {% trans "На главную страницу" %}
+            </a>
+        </p>
+    </div>
 {% endblock %}
