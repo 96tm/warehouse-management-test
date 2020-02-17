@@ -1,0 +1,76 @@
+{% extends 'warehouse/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% trans "Покупка" %}
+{% endblock %}
+{% block header-name %}
+    {% trans "Покупка" %}
+{% endblock %}
+
+{% block content %}
+    {% if form.errors %}
+        {% for field in form %}
+            {% for error in field.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if formset.errors %}
+        {% for error in formset.errors %}
+                <div class="error alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+        {% endfor %}
+        {% for error in formset.non_field_errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="colM">
+        <form method="POST">
+            {% csrf_token %}
+            <fieldset class="module aligned">
+                <h2>{% trans "Выберите покупателя" %}</h2>
+                {% for field in form %}
+                <div class="form-row">
+                    <label for="{{ field.id_for_label }}" class="required">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                </div>
+            {% endfor %}
+            </fieldset>
+
+            {{ formset.management_form }}
+
+            <fieldset class="module aligned">
+                <h2> {% trans "Выберите товары" %}</h2>
+                {% for stock_form in formset %}
+                    <div class="form-row stock-formset">
+                        {{ stock_form.name }}
+                        {{ stock_form.number }}
+                    </div>
+                {% endfor %}
+            </fieldset>
+             <div class="submit-row">
+                <p class="deletelink-box">
+                    <input type="submit" class="default" value="{% trans "Отправить заявку на покупку" %}">
+                </p>
+             </div>
+        </form>
+    </div>
+    <script src="{% static 'warehouse/js/jquery-1.3.2.min.js' %}"></script>
+    <script src="{% static 'warehouse/js/jquery.formset.js' %}"></script>
+    <script src="{% static 'warehouse/js/stock-formset.js' %}"></script>
+{% endblock %}

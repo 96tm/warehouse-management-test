@@ -1,23 +1,47 @@
-import pytz
-
 from django import forms
 
 from django.utils.translation import gettext as _
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import Sum
-from django.conf import settings
 
-from .models import Supplier, Customer, Category, CargoDetails
-from .models import Shipment, ShipmentStock, Cargo, CargoStock, Stock
+from .models import Supplier, Customer, Category
+from .models import Shipment, Cargo, CargoStock, Stock
+from .models import format_date, get_parent_categories
+from .models import get_shipment_total, get_cargo_total
 
 
-def format_date(date):
-    return (date
-            .astimezone(tz=pytz.timezone(settings.TIME_ZONE))
-            .strftime('%Y-%m-%d %H:%M:%S'))
+class CategoryForm(forms.ModelForm):
+    """
+    Форма для отображения категории в интерфейсе кладовщика
+    """
+    class Meta:
+        model = Category
+        fields = ('name', )
+    parent_name = forms.ChoiceField(label=_('Базовая категория'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            choices = get_parent_categories(self.instance.pk)
+            initial = ((self.instance.parent_id, self.instance.name)
+                       if self.instance.parent_id
+                       else choices[0])
+            self.fields['parent_name'].choices = choices
+            self.fields['parent_name'].initial = initial
+
+
+class OrderFormsetsForm(forms.ModelForm):
+    """
+    Форма для заполнения информации о покупке (добавляется несколько товаров)
+    """
+    class Meta:
+        model = Shipment
+        fields = ('customer', )
 
 
 class OrderForm(forms.Form):
+    """
+    Форма для заполнения информации о покупке (добавляется один товар)
+    """
     name = forms.ChoiceField(label=_('Ваше имя'))
     items = forms.ChoiceField(label=_('Выберите товар'))
     item_count = forms.DecimalField(label=_('Количество товара'),
@@ -34,12 +58,20 @@ class OrderForm(forms.Form):
 
 
 class CargoNewForm(forms.ModelForm):
+    """
+    Форма для выбора поставщика
+    при оформлении поставки
+    """
     class Meta:
         model = Cargo
         fields = ('supplier', )
 
 
 class CargoFillForm(forms.ModelForm):
+    """
+    Форма заполнения информации о товаре
+    при оформлении поставки
+    """
     class Meta:
         model = Cargo
         fields = []
@@ -55,15 +87,18 @@ class CargoFillForm(forms.ModelForm):
         choices = [(s.name, s.name) for s in Stock.objects.all()]
         self.fields['stock_name'].choices = choices
 
-    def save(self):
+    def save(self, commit=True):
         stock = Stock.objects.get(name=self.cleaned_data['stock_name'])
         CargoStock.objects.create(cargo=self.instance,
                                   stock=stock,
                                   number=self.cleaned_data['number'])
-        super().save()
+        super().save(commit)
 
 
 class CargoForm(forms.ModelForm):
+    """
+    Форма поставки для интерфейса кладовщика
+    """
     class Meta:
         model = Cargo
         fields = []
@@ -83,13 +118,8 @@ class CargoForm(forms.ModelForm):
                 value.widget = forms.TextInput({'size': '35',
                                                 'readonly': 'readonly'})
                 value.required = False
-            cargo_stocks = (CargoStock
-                            .objects
-                            .filter(cargo=current_cargo)
-                            .select_related('stock'))
-            number = sum([cargo_stock.number for cargo_stock in cargo_stocks])
-            total = sum([cargo_stock.stock.price * cargo_stock.number
-                        for cargo_stock in cargo_stocks])
+            number = current_cargo.cargostock_set.count()
+            total = get_cargo_total(current_cargo)
             supplier = current_cargo.supplier.organization
             date = current_cargo.date
             self.fields['cargo_id'].initial = current_cargo.id
@@ -101,14 +131,17 @@ class CargoForm(forms.ModelForm):
 
 
 class ShipmentForm(forms.ModelForm):
+    """
+    Форма покупки для интерфейса кладовщика
+    """
     class Meta:
         model = Shipment
         fields = []
 
     # дополнительные поля для формы
     number_of_items = forms.CharField(max_length=10,
-                                      label=_('Количество товаров'))
-    total = forms.CharField(max_length=10, label=_('Сумма покупки'))
+                                      label=_('Количество позиций'))
+    total = forms.CharField(max_length=10, label=_('Сумма заказа'))
     customer_name = forms.CharField(max_length=80, label=_('Покупатель'))
     shipment_id = forms.CharField(max_length=10, label=_('Номер заказа'))
     shipment_date = forms.CharField(max_length=19, label=_('Дата заказа'))
@@ -122,25 +155,17 @@ class ShipmentForm(forms.ModelForm):
     # добавляем инициализацию дополнительных полей при создании формы
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'instance' in kwargs and kwargs.get('instance'):
-            current_shipment = kwargs['instance']
+        if self.instance.pk:
+            current_shipment = self.instance
             for key, value in self.fields.items():
                 value.widget = forms.TextInput({'size': '35',
                                                 'readonly': 'readonly'})
                 value.required = False
-            # выбираем записи из many-to-many таблицы shipmentstock,
-            # относящиеся к выбранной погрузке,
-            # к каждой записи добавляем цену соответствующего товара из stocks
-            shipment_stocks = (ShipmentStock
-                               .objects.select_related('stock')
-                               .filter(shipment=current_shipment))
+
             # сумма погрузки
-            money = sum([shipment_stock.stock.price * shipment_stock.number
-                         for shipment_stock in shipment_stocks])
+            money = get_shipment_total(current_shipment)
             # общее количество всех товаров погрузки
-            number = (ShipmentStock.objects
-                      .filter(shipment=current_shipment)
-                      .aggregate(Sum('number')))['number__sum']
+            number = current_shipment.shipmentstock_set.count()
             date = format_date(current_shipment.date)
             values = (number, money, current_shipment.customer.full_name,
                       current_shipment.id, date, current_shipment.status,
@@ -150,12 +175,17 @@ class ShipmentForm(forms.ModelForm):
 
 
 class StockForm(forms.Form):
+    """
+    Форма заказа для страниц оформления покупки и поставки
+    """
     name = forms.ChoiceField(required=True, label=_("Товар"))
     number = forms.IntegerField(min_value=1,
                                 required=True,
                                 label=_("Количество"))
     number.widget = forms.NumberInput(attrs={'required': 'required',
-                                             'value': '1'})
+                                             'value': '1',
+                                             'min': '1',
+                                             'max': '99'})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -165,9 +195,13 @@ class StockForm(forms.Form):
 
 
 class StockFormM2M(forms.ModelForm):
+    """
+    Форма товара для отображения
+    в поставках и покупках в интерфейсе кладовщика
+    """
     class Meta:
         fields = []
-
+    stock_name = forms.CharField(label=_('Наименование'))
     stock_article = forms.CharField(label=_('Артикул'))
     stock_number = forms.CharField(label=_('Количество на складе'))
     cargo_number = forms.CharField(label=_('Количество в заявке'))
@@ -188,9 +222,13 @@ class StockFormM2M(forms.ModelForm):
             self.fields['stock_price'].initial = cargo_stock.stock.price
             self.fields['stock_article'].initial = cargo_stock.stock.article
             self.fields['stock_category'].initial = cargo_stock.stock.category
+            self.fields['stock_name'].initial = cargo_stock.stock.name
 
 
 class CustomerForm(forms.ModelForm):
+    """
+    Форма покупателя для интерфейса кладовщика
+    """
     class Meta:
         model = Customer
         fields = '__all__'
@@ -202,10 +240,13 @@ class CustomerForm(forms.ModelForm):
 
 
 class SupplierForm(forms.ModelForm):
+    """
+    Форма поставщика для интерфейса кладовщика
+    """
     class Meta:
         model = Supplier
         fields = ['organization', 'phone_number', 'email',
-                  'address',  'legal_details', 'contact_info', 'categories']
+                  'address', 'legal_details', 'contact_info', 'categories', ]
         widgets = {'organization': forms.Textarea(attrs={'rows': '2',
                                                          'cols': '80'}),
                    'address': forms.Textarea(attrs={'rows': '2',
@@ -217,9 +258,10 @@ class SupplierForm(forms.ModelForm):
 
     supplier_categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.all(),
+        label=_(''),
         required=False,
         widget=FilteredSelectMultiple(
-            verbose_name=_('Категория'),
+            verbose_name=_('категория'),
             is_stacked=False
         ),
     )
