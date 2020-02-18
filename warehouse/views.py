@@ -17,7 +17,7 @@ from .models import Cargo, Shipment, ShipmentStock, CargoDetails
 from .forms import CargoNewForm, CargoFillForm
 from .forms import StockForm, OrderFormsetsForm, CustomerForm
 from .models import Cargo, Shipment, ShipmentStock
-from .forms import CargoNewForm, CargoFillForm, StockForm, OrderCustomerForm, OrderItemForm, OrderCustomerSelectForm
+from .forms import CargoNewForm, CargoFillForm, StockForm, OrderItemForm, OrderCustomerSelectForm
 
 
 def index(request):
@@ -108,21 +108,15 @@ class OrderFormsetsView(View):
 
 @method_decorator(never_cache, name='dispatch')
 class OrderView(View):
-    OrderItemFormSet = formset_factory(OrderItemForm, min_num=1)
+    OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
 
     def post(self, request):
-        customer_form = OrderCustomerForm(request.POST)
+        customer_form = CustomerForm(request.POST)
         item_formset = self.OrderItemFormSet(request.POST)
         customer_selectform = OrderCustomerSelectForm(request.POST)
-        context = {
-            'customer_form': customer_form,
-            'item_formset': item_formset,
-            'customer_selectform': customer_selectform,
-        }
-
         if request.POST.get('reg'):
             if customer_selectform.is_valid():
-                customer = Customer.objects.get(pk=customer_selectform.cleaned_data.get('customers').pk)
+                customer = Customer.objects.get(pk=customer_selectform.cleaned_data.get('customer').pk)
         else:
             if customer_form.is_valid():
                 customer = customer_form.save()
@@ -133,13 +127,13 @@ class OrderView(View):
             for form in item_formset:
                 product = Stock.objects.get(pk=form.cleaned_data.get('item').pk)
                 ShipmentStock.objects.create(shipment=sh,
-                                                     stock=product,
-                                                     number=int(form.cleaned_data.get('count')))
+                                             stock=product,
+                                             number=int(form.cleaned_data.get('count')))
 
-        return render(request, 'warehouse/order.html', context)
+        return redirect('warehouse:order_successful')
 
     def get(self, request):
-        customer_form = OrderCustomerForm
+        customer_form = CustomerForm
         item_formset = self.OrderItemFormSet
         customer_selectform = OrderCustomerSelectForm
         context = {
@@ -154,6 +148,7 @@ class OrderSuccessfulView(View):
     """
     Class-based view для обработки перенаправления после покупки
     """
+
     def get(self, request):
         return render(request, 'warehouse/order_successful.html')
 
@@ -234,7 +229,7 @@ class ShipmentConfirmation(TemplateView):
                  + ' вы можете изменить ее статус по ссылке: ')
         body += (request.get_host()
                  + reverse('admin:warehouse_shipment_change',
-                           args=(shipment.id, )))
+                           args=(shipment.id,)))
         message = EmailMessage(subject=_('Погрузка доставлена'),
                                body=body,
                                to=[settings.ADMINS[0][1], ])

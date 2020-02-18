@@ -10,19 +10,27 @@
     {% endblock %}
 
 {% block content %}
-<form method="POST">
-    {% csrf_token %}
-    <table id="customer-tbl" cellspacing="0" cellpadding="4" bgcolor="lime" border>
-        <tr>
-            <td>Уже зарегистрирован</td>
-            <td><input type="checkbox" id="id_reg" name="reg" checked></td>
-        </tr>
-        <tr>
-            <td>{{ customer_selectform.customers }}</td>
-            <td>Зарегиться {{ customer_form.as_p }}</td>
-        </tr>
-    </table>
-    {{ item_formset.management_form }}
+<div class="colM">
+    <form method="POST">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <h2>{% trans "Информация о покупателе" %}</h2>
+            <div class="form-row">
+                <label for="id_reg">
+                    Уже зарегистрированы?
+                </label>
+                <input type="checkbox" id="id_reg" name="reg" >
+            </div>
+            <div class="form-row" id="sel_cus" style="display: none">
+                {{ customer_selectform }}
+            </div>
+            <div class="form-row" id="reg_cus">
+                {{ customer_form.as_p }}
+            </div>
+        </fieldset>
+
+        {{ item_formset.management_form }}
+
         <fieldset class="module aligned">
             <h2> {% trans "Выберите товары" %}</h2>
             {% for form in item_formset %}
@@ -37,8 +45,10 @@
                 <input type="submit" class="default" value="{% trans 'Отправить заявку на покупку' %}">
             </p>
          </div>
-</form>
-    <script src="{% static 'warehouse/js/jquery-1.3.2.min.js' %}"></script>
-    <script src="{% static 'warehouse/js/jquery.formset.js' %}"></script>
-    <script src="{% static 'warehouse/js/order-formset.js' %}"></script>
+    </form>
+</div>
+
+<script src="{% static 'warehouse/js/jquery-1.3.2.min.js' %}"></script>
+<script src="{% static 'warehouse/js/jquery.formset.js' %}"></script>
+<script src="{% static 'warehouse/js/order-formset.js' %}"></script>
 {% endblock %}

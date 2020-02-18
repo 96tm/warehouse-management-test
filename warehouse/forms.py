@@ -38,25 +38,23 @@ class OrderFormsetsForm(forms.ModelForm):
         fields = ('customer', )
 
 
-class OrderCustomerForm(forms.ModelForm):
-    full_name = forms.CharField(required=False, label='ФИО')
-    email = forms.EmailField(required=False, label='E-mail')
-    contact_info = forms.CharField(required=False, label='Контактная информация', widget=forms.Textarea())
-    phone_number = forms.CharField(required=False, label='Телефон')
-
-    class Meta:
-        model = Customer
-        fields = '__all__'
-
-
 class OrderCustomerSelectForm(forms.Form):
-    customers = forms.ModelChoiceField(queryset=Customer.objects.all(),
-                                       required=False)
+    """
+    Форма для выбора покупателя на странице покупки
+    """
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(),
+                                      label='Покупатель',
+                                      widget=forms.Select(attrs={'disabled': 'disabled'}))
 
 
 class OrderItemForm(forms.Form):
-    item = forms.ModelChoiceField(queryset=Stock.objects.all(), required=True)
+    """
+        Форма для выбора товара на странице покупки
+    """
+    item = forms.ModelChoiceField(queryset=Stock.objects.all(), widget=forms.Select(attrs={'required': True}))
     count = forms.DecimalField(required=True, initial=1, min_value=1)
+
+
 
 
 class CargoNewForm(forms.ModelForm):

@@ -7,10 +7,5 @@
 
 {% block content %}
     <p>{% trans "Ваш заказ принят!" %}</p>
-    <h3>{% trans "Данные по заказу" %}</h3>
-    <p>{% trans "Заказчик: " %} {{ customer_name }}</p>
-    <p>{% trans "ИД заказчика: " %} {{ customer_id }}</p>
-    <p>{% trans "Заказано: " %} {{ product_name }}</p>
-    <p>{% trans "Количество: " %} {{ product_count }}</p>
     <a href="{% url 'warehouse:index' %}">{% trans "На главную страницу" %}</a>
 {% endblock %}
