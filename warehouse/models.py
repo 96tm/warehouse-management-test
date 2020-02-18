@@ -3,8 +3,11 @@ import pytz
 from django.db import models
 
 from django.conf import settings
+from django.dispatch import receiver
 
 from django.utils.translation import gettext as _
+
+from django.db.models.signals import post_save, post_delete
 
 
 def format_date(date):
@@ -257,3 +260,48 @@ class SupplierCategory(models.Model):
 
     def __str__(self):
         return _('поставщик - ') + self.supplier.organization
+
+
+class ModelChangeLogsModel(models.Model):
+    table_name = models.CharField(max_length=132, null=False, blank=True)
+    data = models.TextField(null=False, blank=True)
+    action = models.CharField(max_length=16, null=False, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+
+@receiver(post_save, sender=Cargo)
+def save_Cargo(sender, instance, **kwargs):
+    log = ModelChangeLogsModel(table_name=instance._meta.db_table,
+                               data=str(instance),
+                               action='save')
+    log.save()
+
+
+@receiver(post_delete, sender=Cargo)
+def del_Cargo(sender, instance, **kwargs):
+    log = ModelChangeLogsModel(table_name=instance._meta.db_table,
+                               data=str(instance),
+                               action='delete')
+    log.save()
+
+
+@receiver(post_save, sender=CargoStock)
+def save_CargoStock(sender, instance, **kwargs):
+    log = ModelChangeLogsModel(table_name=instance._meta.db_table,
+                               data='№_поставки: ' + str(instance.cargo_id)
+                                    + ' ,поставщик: ' + str(instance.cargo.supplier.organization)
+                                    + ' ,артикул: ' + str(instance.stock_id)
+                                    + ' ,количество: ' + str(instance.number),
+                               action='save')
+    log.save()
+
+
+@receiver(post_delete, sender=CargoStock)
+def del_CargoStock(sender, instance, **kwargs):
+    log = ModelChangeLogsModel(table_name=instance._meta.db_table,
+                               data='№_поставки: ' + str(instance.cargo_id)
+                                    + ' ,поставщик: ' + str(instance.cargo.supplier.organization)
+                                    + ' ,артикул: ' + str(instance.stock_id)
+                                    + ' ,количество: ' + str(instance.number),
+                               action='delete')
+    log.save()
