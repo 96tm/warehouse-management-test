@@ -9,6 +9,14 @@ from .models import format_date, get_parent_categories
 from .models import get_shipment_total, get_cargo_total
 
 
+class StockPriceFilterForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['price_from'] = forms.FloatField(label='', required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'From'}))
+        self.fields['price_to'] = forms.FloatField(label='', required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'To'}))
+
 class CategoryForm(forms.ModelForm):
     """
     Форма для отображения категории в интерфейсе кладовщика
