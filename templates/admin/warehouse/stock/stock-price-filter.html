@@ -3,7 +3,6 @@
 <ul>
 {% with choices.0 as choice %}
     <li {% if choice.selected %} class="selected"{% endif %}>
-        <a href="#from_to" >{% trans 'Range' %}</a>
         <form method="get" id="from_to" >
             {% for k, v in choice.request.GET.items %}
                 {% if not k == 'price_from' and not k == 'price_to' %}

@@ -26,9 +26,6 @@ from django.db.models import Q
 
 # Register your models here.
 
-admin.site.register(Supplier)
-admin.site.register(Customer)
-
 
 def subtotal_value(obj_id):
     results = Category.objects.filter(parent_id=obj_id).values('id')
@@ -44,8 +41,8 @@ def subtotal_value(obj_id):
 
 
 class StockPriceFilter(ListFilter):
-    template = 'warehouse/admin/stock-price-filter.html'
-    title = 'price'
+    template = 'admin/warehouse/stock/stock-price-filter.html'
+    title = 'По цене'
     parameter_name = 'price'
     request = None
 
@@ -96,8 +93,8 @@ class StockPriceFilter(ListFilter):
 
 
 class StockCategoryFilter(SimpleListFilter):
-    template = 'warehouse/admin/stock-total-value.html'
-    title = 'category'
+    template = 'admin/warehouse/stock/stock-total-value.html'
+    title = 'По категории'
     parameter_name = 'category'
 
     def lookups(self, request, model_admin):
@@ -147,7 +144,7 @@ class StockCategoryFilter(SimpleListFilter):
 
 
 class StockEmptyFilter(SimpleListFilter):
-    title = 'availability'
+    title = 'По наличию'
     parameter_name = 'number'
 
     def lookups(self, request, model_admin):
@@ -171,6 +168,8 @@ class StockAdmin(admin.ModelAdmin):
     search_fields = ['article', 'name']
     ordering = ('category', 'name')
     list_per_page = 25
+    verbose_name = _('Товар')
+    verbose_name_plural = _('Товары')
 
 
 
@@ -221,7 +220,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
     total_value.short_description = 'Общая стоимость'
 
-
+@admin.register(Cargo)
 class CargoAdmin(admin.ModelAdmin):
     class StockInline(admin.StackedInline):
         model = CargoStock
@@ -267,7 +266,7 @@ class CargoAdmin(admin.ModelAdmin):
             obj.status = Cargo.DONE
         super().save_model(request, obj, form, change)
 
-
+@admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
     class CargoInline(admin.StackedInline):
         model = Cargo
@@ -302,7 +301,7 @@ class SupplierAdmin(admin.ModelAdmin):
             obj.suppliercategory_set.set([])
         return super().get_deleted_objects(objs, request)
 
-
+@admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     # объект для отображения заказов выбранного покупателя
     class ShipmentInline(admin.StackedInline):
@@ -326,7 +325,7 @@ class CustomerAdmin(admin.ModelAdmin):
                      'email', 'contact_info')}),
     )
 
-
+@admin.register(Shipment)
 class ShipmentAdmin(admin.ModelAdmin):
 
     class StockInline(admin.StackedInline):
@@ -426,12 +425,3 @@ class ShipmentAdmin(admin.ModelAdmin):
                                body=body, to=[receiver, ],
                                attachments=[attachment, ])
         message.send()
-
-
-admin.site.register(Supplier, SupplierAdmin)
-admin.site.register(Customer, CustomerAdmin)
-admin.site.register(Stock, StockAdmin)
-admin.site.register(Category, CategoryAdmin)
-#admin.site.register(CargoDetails)
-admin.site.register(Shipment, ShipmentAdmin)
-admin.site.register(Cargo, CargoAdmin)
