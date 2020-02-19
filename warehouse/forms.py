@@ -29,32 +29,21 @@ class CategoryForm(forms.ModelForm):
             self.fields['parent_name'].initial = initial
 
 
-class OrderFormsetsForm(forms.ModelForm):
+class OrderCustomerSelectForm(forms.Form):
     """
-    Форма для заполнения информации о покупке (добавляется несколько товаров)
+    Форма для выбора покупателя на странице покупки
     """
-    class Meta:
-        model = Shipment
-        fields = ('customer', )
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(),
+                                      label='Покупатель',
+                                      widget=forms.Select(attrs={'disabled': 'disabled'}))
 
 
-class OrderForm(forms.Form):
+class OrderItemForm(forms.Form):
     """
-    Форма для заполнения информации о покупке (добавляется один товар)
+        Форма для выбора товара на странице покупки
     """
-    name = forms.ChoiceField(label=_('Ваше имя'))
-    items = forms.ChoiceField(label=_('Выберите товар'))
-    item_count = forms.DecimalField(label=_('Количество товара'),
-                                    initial=1, min_value=1)
-
-    def __init__(self, *args, **kwargs):
-        customers = kwargs.get('initial')['name']
-        customers_list = [(k, v) for k, v in customers]
-        items = kwargs.get('initial')['items']
-        items_list = [(k, v) for k, v in items]
-        super().__init__(*args, **kwargs)
-        self.fields['name'].choices = customers_list
-        self.fields['items'].choices = items_list
+    item = forms.ModelChoiceField(queryset=Stock.objects.all(), widget=forms.Select(attrs={'required': True}))
+    count = forms.DecimalField(required=True, initial=1, min_value=1)
 
 
 class CargoNewForm(forms.ModelForm):
