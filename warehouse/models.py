@@ -257,3 +257,10 @@ class SupplierCategory(models.Model):
 
     def __str__(self):
         return _('поставщик - ') + self.supplier.organization
+
+
+class ModelChangeLogsModel(models.Model):
+    table_name = models.CharField(max_length=132, null=False, blank=True)
+    data = models.TextField(null=False, blank=True)
+    action = models.CharField(max_length=16, null=False, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
