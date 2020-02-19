@@ -6,7 +6,6 @@ app_name = 'warehouse'
 
 urlpatterns = [path('', views.index, name='index'),
                path('order', views.OrderView.as_view(), name='order'),
-               # path('order', views.OrderFormsetsView.as_view(), name='order'),
                path('order_successful',
                     views.OrderSuccessfulView.as_view(),
                     name='order_successful'),

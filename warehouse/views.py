@@ -9,15 +9,13 @@ from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 
-from django.views.generic.edit import FormView
 from django.views.decorators.cache import never_cache
 
-from .models import Customer, Stock, CargoStock
-from .models import Cargo, Shipment, ShipmentStock, CargoDetails
-from .forms import CargoNewForm, CargoFillForm
-from .forms import StockForm, OrderFormsetsForm, CustomerForm
-from .models import Cargo, Shipment, ShipmentStock
-from .forms import CargoNewForm, CargoFillForm, StockForm, OrderItemForm, OrderCustomerSelectForm
+from .models import Stock, CargoStock
+from .models import CargoDetails, ShipmentStock
+from .models import Cargo, Shipment
+from .forms import CustomerForm, OrderItemForm, OrderCustomerSelectForm
+from .forms import CargoNewForm, CargoFillForm, StockForm
 
 
 def index(request):
@@ -66,47 +64,6 @@ class CargoFormsetsView(View):
 
 
 @method_decorator(never_cache, name='dispatch')
-class OrderFormsetsView(View):
-    """
-    Class-based view для обработки страницы
-    покупки с добавлением нескольких товаров
-    в одной форме
-    """
-    stock_formset = forms.formset_factory(form=StockForm,
-                                          max_num=50,
-                                          min_num=1,
-                                          extra=0)
-    template = 'warehouse/order_formsets.html'
-
-    def post(self, request):
-        form = OrderFormsetsForm(request.POST)
-        formset = self.stock_formset(request.POST)
-        context = {'form': form, 'formset': formset}
-        if form.is_valid() and formset.is_valid() and formset.cleaned_data:
-            instance = form.save()
-            stocks = {}
-            for stock in formset.cleaned_data:
-                name = stock['name']
-                stocks[name] = stocks.get(name, 0) + stock['number']
-            for name, number in stocks.items():
-                stock = Stock.objects.get(name=name)
-                ShipmentStock.objects.create(shipment=instance,
-                                             stock=stock, number=number)
-            messages.info(request, _('Заявка отправлена'))
-            return redirect(to='warehouse:index')
-        else:
-            if not formset.cleaned_data:
-                context['formset'] = self.stock_formset()
-            return render(request, self.template, context)
-
-    def get(self, request):
-        form = OrderFormsetsForm()
-        formset = self.stock_formset()
-        context = {'form': form, 'formset': formset}
-        return render(request, self.template, context=context)
-
-
-@method_decorator(never_cache, name='dispatch')
 class OrderView(View):
     OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
 
@@ -138,9 +95,9 @@ class OrderView(View):
         return redirect('warehouse:order_successful')
 
     def get(self, request):
-        customer_form = CustomerForm
-        item_formset = self.OrderItemFormSet
-        customer_selectform = OrderCustomerSelectForm
+        customer_form = CustomerForm()
+        item_formset = self.OrderItemFormSet()
+        customer_selectform = OrderCustomerSelectForm()
         context = {
             'customer_form': customer_form,
             'item_formset': item_formset,

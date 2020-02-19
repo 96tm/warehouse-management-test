@@ -29,14 +29,6 @@ class CategoryForm(forms.ModelForm):
             self.fields['parent_name'].initial = initial
 
 
-class OrderFormsetsForm(forms.ModelForm):
-    """
-    Форма для заполнения информации о покупке (добавляется несколько товаров)
-    """
-    class Meta:
-        model = Shipment
-        fields = ('customer', )
-
 
 class OrderCustomerSelectForm(forms.Form):
     """
@@ -53,8 +45,6 @@ class OrderItemForm(forms.Form):
     """
     item = forms.ModelChoiceField(queryset=Stock.objects.all(), widget=forms.Select(attrs={'required': True}))
     count = forms.DecimalField(required=True, initial=1, min_value=1)
-
-
 
 
 class CargoNewForm(forms.ModelForm):
