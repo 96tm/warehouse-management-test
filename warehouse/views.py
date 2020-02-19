@@ -114,9 +114,12 @@ class OrderView(View):
         customer_form = CustomerForm(request.POST)
         item_formset = self.OrderItemFormSet(request.POST)
         customer_selectform = OrderCustomerSelectForm(request.POST)
+
+        # FIXME: Добавить обработку неправильно введённых форм
+
         if request.POST.get('reg'):
             if customer_selectform.is_valid():
-                customer = Customer.objects.get(pk=customer_selectform.cleaned_data.get('customer').pk)
+                customer = customer_selectform.cleaned_data.get('customer')
         else:
             if customer_form.is_valid():
                 customer = customer_form.save()
@@ -124,12 +127,14 @@ class OrderView(View):
         sh = Shipment.objects.create(customer=customer)
 
         if item_formset.is_valid():
+            stocks = dict()
             for form in item_formset:
-                product = Stock.objects.get(pk=form.cleaned_data.get('item').pk)
-                ShipmentStock.objects.create(shipment=sh,
-                                             stock=product,
-                                             number=int(form.cleaned_data.get('count')))
+                name = form.cleaned_data['item']
+                stocks[name] = stocks.get(name, 0) + form.cleaned_data.get('count')
+            for stock, count in stocks.items():
+                ShipmentStock.objects.create(shipment=sh, stock=stock, number=count)
 
+        messages.info(request, _('Заявка отправлена'))
         return redirect('warehouse:order_successful')
 
     def get(self, request):
