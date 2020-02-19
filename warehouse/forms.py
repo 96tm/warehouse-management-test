@@ -29,6 +29,7 @@ class CategoryForm(forms.ModelForm):
             self.fields['parent_name'].initial = initial
 
 
+
 class OrderCustomerSelectForm(forms.Form):
     """
     Форма для выбора покупателя на странице покупки

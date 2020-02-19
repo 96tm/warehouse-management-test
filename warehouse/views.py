@@ -110,6 +110,7 @@ class OrderSuccessfulView(View):
     """
     Class-based view для обработки перенаправления после покупки
     """
+
     def get(self, request):
         return render(request, 'warehouse/order_successful.html')
 
@@ -190,7 +191,7 @@ class ShipmentConfirmation(TemplateView):
                  + ' вы можете изменить ее статус по ссылке: ')
         body += (request.get_host()
                  + reverse('admin:warehouse_shipment_change',
-                           args=(shipment.id, )))
+                           args=(shipment.id,)))
         message = EmailMessage(subject=_('Погрузка доставлена'),
                                body=body,
                                to=[settings.ADMINS[0][1], ])
