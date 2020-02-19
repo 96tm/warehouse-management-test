@@ -19,13 +19,6 @@ def format_date(date):
             .strftime('%Y-%m-%d %H:%M:%S'))
 
 
-def get_parent_name(obj):
-    if not obj.parent_id:
-        return _('Нет базовой категории')
-    else:
-        return Category.objects.get(pk=obj.parent_id).name
-
-
 def get_cargo_total(obj):
     return sum([row.stock.price * row.number
                 for row in obj.cargostock_set.all()])
@@ -49,7 +42,6 @@ def get_parent_categories(category_pk):
     to_remove = [category_pk, ]
     choices = [(0, _('Нет базовой категории')), ]
     for category in categories_list:
-        print(category, 'to remove', to_remove)
         if category['parent_id'] not in to_remove:
             choices.append((category['pk'], category['name']))
         else:
@@ -260,7 +252,14 @@ class SupplierCategory(models.Model):
 
 
 class ModelChangeLogsModel(models.Model):
-    table_name = models.CharField(max_length=132, null=False, blank=True)
-    data = models.TextField(null=False, blank=True)
-    action = models.CharField(max_length=16, null=False, blank=True)
-    date = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name = _('Операция')
+        verbose_name_plural = _('История операций')
+    table_name = models.CharField(max_length=132, null=False, blank=True,
+                                  verbose_name=_('Тип объекта'))
+    data = models.TextField(null=False, blank=True,
+                            verbose_name=_('Объект'))
+    action = models.CharField(max_length=16, null=False, blank=True,
+                              verbose_name=_('Действие'))
+    date = models.DateTimeField(auto_now_add=True,
+                                verbose_name='Дата')

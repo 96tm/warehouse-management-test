@@ -2,29 +2,26 @@ import qrcode
 import io
 import uuid
 
-from django.contrib import admin, messages
-from django.contrib.admin import ListFilter, SimpleListFilter
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.contrib import admin, messages
+from django.db.models import Q
 from django.core.mail import EmailMessage
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
-from .models import Cargo, CargoStock
+from django.contrib.admin import ListFilter, SimpleListFilter
+from django.utils.translation import gettext as _
 
-from .forms import CustomerForm, SupplierForm, CategoryForm
+from .forms import CustomerForm, SupplierForm
+from .forms import StockPriceFilterForm, CategoryForm
 from .forms import ShipmentForm, CargoForm, StockFormM2M
-from .forms import StockPriceFilterForm
 
+from .models import get_shipment_total
+from .models import Cargo, CargoStock
 from .models import Supplier, Customer, Stock, Category
-from .models import Shipment, ShipmentStock
-from .models import get_parent_name, get_shipment_total
-from django.db.models import Q
+from .models import Shipment, ShipmentStock, ModelChangeLogsModel
 
 # функция gettext с псевдонимом _ применяется к строками
 # для последующего перевода
-
-
-# Register your models here.
 
 
 def subtotal_value(obj_id):
@@ -34,7 +31,8 @@ def subtotal_value(obj_id):
         for result in results:
             total += subtotal_value(result['id'])
     else:
-        results = Stock.objects.filter(category__id=obj_id).values('price', 'number')
+        results = Stock.objects.filter(category__id=obj_id).values('price',
+                                                                   'number')
         for result in results:
             total += result['price'] * result['number']
     return total
@@ -42,7 +40,7 @@ def subtotal_value(obj_id):
 
 class StockPriceFilter(ListFilter):
     template = 'admin/warehouse/stock/stock-price-filter.html'
-    title = 'По цене'
+    title = _('По цене')
     parameter_name = 'price'
     request = None
 
@@ -75,7 +73,6 @@ class StockPriceFilter(ListFilter):
             filters.update({
                 'price__lte': self.used_parameters.get('price_to', None),
             })
-
         return queryset.filter(**filters)
 
     def value(self):
@@ -86,26 +83,31 @@ class StockPriceFilter(ListFilter):
                     'selected': self.value() is not None,
                     'request': self.request,
                     'form': StockPriceFilterForm(data={
-                        'price_from': self.used_parameters.get('price_from', None),
-                        'price_to': self.used_parameters.get('price_to', None),
+                        'price_from': self.used_parameters.get('price_from',
+                                                               None),
+                        'price_to': self.used_parameters.get('price_to',
+                                                             None),
                     }),
                 },)
 
 
 class StockCategoryFilter(SimpleListFilter):
     template = 'admin/warehouse/stock/stock-total-value.html'
-    title = 'По категории'
+    title = _('По категории')
     parameter_name = 'category'
 
     def lookups(self, request, model_admin):
-        def subcategories(obj_id=0, sublevel='', name='Все товары'):
-            num_of_subcategory = Category.objects.filter(parent_id=obj_id).count()
+        def subcategories(obj_id=0, sublevel='', name=_('Все товары')):
+            num_of_subcategory = (Category
+                                  .objects.filter(parent_id=obj_id).count())
             total = [(obj_id, (sublevel + name + f'({num_of_subcategory})'))]
-            results = Category.objects.filter(parent_id=obj_id).values('id', 'name')
+            results = (Category
+                       .objects.filter(parent_id=obj_id).values('id', 'name'))
             if results:
                 sublevel += ' - '
                 for result in results:
-                    total += subcategories(result['id'], sublevel, result['name'])
+                    total += subcategories(result['id'],
+                                           sublevel, result['name'])
             return total
 
         results = subcategories()
@@ -117,7 +119,8 @@ class StockCategoryFilter(SimpleListFilter):
             if a != 0:
                 def have_subcategory(obj_id):
                     total = [obj_id]
-                    results = Category.objects.filter(parent_id=obj_id).values('id')
+                    results = (Category
+                               .objects.filter(parent_id=obj_id).values('id'))
                     if results:
                         for result in results:
                             total += have_subcategory(result['id'])
@@ -135,22 +138,23 @@ class StockCategoryFilter(SimpleListFilter):
 
     def choices(self, changelist):
         for lookup, title in self.lookup_choices:
+            query = changelist.get_query_string({self.parameter_name: lookup})
             yield {
                 'selected': self.value() == str(lookup),
-                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'query_string': query,
                 'display': title,
                 'total_cost': self.total_value(self.value())
             }
 
 
 class StockEmptyFilter(SimpleListFilter):
-    title = 'По наличию'
+    title = _('По наличию')
     parameter_name = 'number'
 
     def lookups(self, request, model_admin):
         return (
-            ('Empty', 'Нет на складе'),
-            ('Available', 'Есть на складе')
+            ('Empty', _('Нет на складе')),
+            ('Available', _('Есть на складе'))
         )
 
     def queryset(self, request, queryset):
@@ -160,30 +164,47 @@ class StockEmptyFilter(SimpleListFilter):
             return queryset.filter(number__exact=0)
 
 
+@admin.register(ModelChangeLogsModel)
+class LogAdmin(admin.ModelAdmin):
+    model = ModelChangeLogsModel
+    list_display = ('date', 'table_name', 'action', 'data')
+
+
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
-    list_display = ['article', 'name', 'price', 'number', 'category', ]
-    list_display_links = ('name',)
+    """
+    Отображение списка и формы товаров
+    """
+    list_display = ('article', 'name', 'price', 'number', 'category', )
+    list_display_links = ('name', )
     list_filter = (StockPriceFilter, StockCategoryFilter, StockEmptyFilter)
-    search_fields = ['article', 'name']
-    ordering = ('category', 'name')
+    search_fields = ('article', 'name', )
+    ordering = ('category', 'name', )
     list_per_page = 25
     verbose_name = _('Товар')
     verbose_name_plural = _('Товары')
 
 
-
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'upper_categories', 'lower_categories', 'parent_id', 'num_of_subcategory',
-                    'total_value')
-    ordering = ('parent_id', 'id',)
-    parent_name = get_parent_name
-    parent_name.short_description = _('Базовая категория')
+    """
+    Отображение списка и формы категорий
+    """
+    form = CategoryForm
+    list_display = ('id', 'name', 'upper_categories', 'lower_categories',
+                    'parent_id', 'num_of_subcategory', 'total_value', )
+    ordering = ('parent_id', 'id', )
+    fields = ('name', 'parent_name', )
 
     def save_model(self, request, obj, form, change):
         obj.parent_id = form.cleaned_data['parent_name']
         super().save_model(request, obj, form, change)
+
+    def parent_name(self, obj):
+        if not obj.parent_id:
+            return _('Нет базовой категории')
+        else:
+            return Category.objects.get(pk=obj.parent_id).name
 
     def upper_categories(self, obj):
         next_id = obj.parent_id
@@ -194,8 +215,6 @@ class CategoryAdmin(admin.ModelAdmin):
             next_id = next_id.parent_id
         return result
 
-    upper_categories.short_description = 'Надкатегории'
-
     def lower_categories(self, obj):
         obj_id = obj.id
         total = ''
@@ -204,24 +223,28 @@ class CategoryAdmin(admin.ModelAdmin):
             total += str(result) + ', '
         return total
 
-    lower_categories.short_description = 'Подкатегории'
-
     def num_of_subcategory(self, obj):
         id = obj.id
         result = Category.objects.filter(parent_id=id).count()
         return result
 
-    num_of_subcategory.short_description = 'Количество подкатегорий'
-    num_of_subcategory.allow_tags = True
-
     def total_value(self, obj):
         obj_id = obj.id
         return subtotal_value(obj_id)
 
-    total_value.short_description = 'Общая стоимость'
+    num_of_subcategory.allow_tags = True
+    num_of_subcategory.short_description = _('Количество подкатегорий')
+    parent_name.short_description = _('Базовая категория')
+    upper_categories.short_description = _('Надкатегории')
+    lower_categories.short_description = _('Подкатегории')
+    total_value.short_description = _('Общая стоимость')
+
 
 @admin.register(Cargo)
 class CargoAdmin(admin.ModelAdmin):
+    """
+    Отображение списка и формы поставок
+    """
     class StockInline(admin.StackedInline):
         model = CargoStock
         form = StockFormM2M
@@ -233,9 +256,9 @@ class CargoAdmin(admin.ModelAdmin):
 
     form = CargoForm
     # поля для отображения в списке поставок
-    list_display = ['supplier', 'date', 'status', ]
+    list_display = ('supplier', 'date', 'status', )
     # поля для фильтрации
-    list_filter = ['date', 'supplier', 'status', ]
+    list_filter = ('date', 'supplier', 'status', )
     # поля для текстового поиска
     search_fields = ['supplier__organization', ]
     fieldsets = ((_('ИНФОРМАЦИЯ О ПОСТАВКЕ'),
@@ -266,8 +289,12 @@ class CargoAdmin(admin.ModelAdmin):
             obj.status = Cargo.DONE
         super().save_model(request, obj, form, change)
 
+
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
+    """
+    Отображение списка и формы поставщиков
+    """
     class CargoInline(admin.StackedInline):
         model = Cargo
         form = CargoForm
@@ -278,7 +305,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
     form = SupplierForm
     inlines = [CargoInline, ]
-    list_display = ['organization', 'email', 'phone_number', 'address', ]
+    list_display = ('organization', 'email', 'phone_number', 'address', )
     fieldsets = ((_('ЮРИДИЧЕСКОЕ ЛИЦО'), {'fields':
                                           ('organization',
                                            'address',
@@ -301,8 +328,12 @@ class SupplierAdmin(admin.ModelAdmin):
             obj.suppliercategory_set.set([])
         return super().get_deleted_objects(objs, request)
 
+
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
+    """
+    Отображение списка и формы покупателей
+    """
     # объект для отображения заказов выбранного покупателя
     class ShipmentInline(admin.StackedInline):
         form = ShipmentForm
@@ -315,7 +346,7 @@ class CustomerAdmin(admin.ModelAdmin):
         show_change_link = True
 
     form = CustomerForm
-    list_display = ['full_name', 'email', 'phone_number']
+    list_display = ('full_name', 'email', 'phone_number', )
 
     inlines = [ShipmentInline, ]
 
@@ -325,9 +356,12 @@ class CustomerAdmin(admin.ModelAdmin):
                      'email', 'contact_info')}),
     )
 
+
 @admin.register(Shipment)
 class ShipmentAdmin(admin.ModelAdmin):
-
+    """
+    Отображение списка и формы заказов
+    """
     class StockInline(admin.StackedInline):
         model = ShipmentStock
         form = StockFormM2M
@@ -341,17 +375,17 @@ class ShipmentAdmin(admin.ModelAdmin):
     # поля для отображения в списке погрузок
     shipment_total = get_shipment_total
     shipment_total.short_description = _('Сумма покупки')
-    list_display = ['customer', 'date', 'status', shipment_total, 'qr', ]
+    list_display = ('customer', 'date', 'status', shipment_total, 'qr', )
     # поля для фильтрации
-    list_filter = ['date', 'customer', 'status', ]
+    list_filter = ('date', 'customer', 'status', )
     # поля для текстового поиска
-    search_fields = ['status', 'customer__full_name', ]
+    search_fields = ('status', 'customer__full_name', )
     fieldsets = ((_('ИНФОРМАЦИЯ О ПОКУПКЕ'),
                   {'fields': ('shipment_id', 'customer_name',
                               'number_of_items', 'total',
                               'shipment_status', 'shipment_date',
                               'shipment_qr', )}), )
-    inlines = [StockInline, ]
+    inlines = (StockInline, )
 
     def is_shipment_available(self, obj):
         return all(s.stock.number > s.number
@@ -387,7 +421,8 @@ class ShipmentAdmin(admin.ModelAdmin):
         # печатаем сообщение об ошибке
         if not shipment_available:
             messages.set_level(request, messages.ERROR)
-            messages.error(request, _('На складе недостаточно товара для данной покупки'))
+            messages.error(request, _('На складе недостаточно '
+                                      + 'товара для данной покупки'))
 
     # добавляем значения в extra_context для дальнейшего использования
     # на странице формы информации о погрузке
