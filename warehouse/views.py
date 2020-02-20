@@ -179,7 +179,7 @@ class ShipmentConfirmation(TemplateView):
         return render(request, template_name=self.template_name)
 
     def post(self, request):
-        form = self.ShipmentConfirmationForm(request.POST)
+        form = ShipmentConfirmationForm(request.POST)
         if form.is_valid():
             key = form.cleaned_data['shipment_key'].strip()
             if key and Shipment.objects.filter(qr=key).exists():
