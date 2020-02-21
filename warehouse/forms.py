@@ -3,7 +3,7 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from .models import Supplier, Customer, Category
+from .models import Supplier, Customer, Category, ModelChangeLogsModel
 from .models import Shipment, Cargo, CargoStock, Stock
 from .models import format_date, get_parent_categories
 from .models import get_shipment_total, get_cargo_total
@@ -284,3 +284,10 @@ class ShipmentConfirmationForm(forms.Form):
     Форма с полем ввода ключа для подтверждения получения покупки
     """
     shipment_key = forms.CharField(required=True)
+
+
+class ModelChangeLogsModelForm(forms.ModelForm):
+
+    class Meta:
+        model = ModelChangeLogsModel
+        fields = '__all__'

@@ -11,7 +11,7 @@ from email.encoders import encode_base64
 from django.contrib.admin import ListFilter, SimpleListFilter
 from django.utils.translation import gettext as _
 
-from .forms import CustomerForm, SupplierForm
+from .forms import CustomerForm, SupplierForm, ModelChangeLogsModelForm
 from .forms import StockPriceFilterForm, CategoryForm
 from .forms import ShipmentForm, CargoForm, StockFormM2M
 
@@ -166,8 +166,17 @@ class StockEmptyFilter(SimpleListFilter):
 
 @admin.register(ModelChangeLogsModel)
 class LogAdmin(admin.ModelAdmin):
-    model = ModelChangeLogsModel
-    list_display = ('date', 'table_name', 'action', 'data')
+    form = ModelChangeLogsModelForm
+    list_display = ('id', 'table_name', 'data', 'action', 'date', )
+    fields = list_display
+    list_filter = ('table_name', 'date', 'action',)
+    search_fields = ('data',)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Stock)
