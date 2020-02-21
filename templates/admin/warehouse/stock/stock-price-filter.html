@@ -1,0 +1,27 @@
+{% load i18n %}
+<h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
+<ul>
+{% with choices.0 as choice %}
+    <li {% if choice.selected %} class="selected"{% endif %}>
+        <form method="get" id="from_to" >
+            {% for k, v in choice.request.GET.items %}
+                {% if not k == 'price_from' and not k == 'price_to' %}
+                    <input type="hidden" name="{{ k }}" value="{{ v }}">
+                {% endif %}
+            {% endfor %}
+            <div>
+                {{ choice.form.as_table }}
+            </div>
+        </form>
+        <form method="get" id="all" >
+            {% for k, v in choice.request.GET.items %}
+                {% if not k == 'price_from' and not k == 'price_to' %}
+                    <input type="hidden" name="{{ k }}" value="{{ v }}">
+                {% endif %}
+            {% endfor %}
+        </form>
+        <input form="from_to" type="submit" class="submit" value="Принять"></input>
+        <input form="all" type="submit" class="submit" value="Сбросить"></input>
+    </li>
+{% endwith %}
+</ul>

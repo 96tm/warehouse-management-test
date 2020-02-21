@@ -15,13 +15,15 @@ from .models import Stock, CargoStock
 from .models import CargoDetails, ShipmentStock
 from .models import Cargo, Shipment
 from .forms import CustomerForm, OrderItemForm, OrderCustomerSelectForm
-from .forms import CargoNewForm, CargoFillForm, StockForm
+from .forms import CargoNewForm, CargoFillForm, StockForm, ShipmentConfirmationForm
 
 
 def index(request):
     return render(request, 'warehouse/index.html')
 
 
+# не кэшируем страницу для нормальной работы jQuery кода
+# по добавлению formsets
 @method_decorator(never_cache, name='dispatch')
 class CargoFormsetsView(View):
     """
@@ -65,6 +67,9 @@ class CargoFormsetsView(View):
 
 @method_decorator(never_cache, name='dispatch')
 class OrderView(View):
+    """
+    Class-based view для обработки страницы покупки
+    """
     OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
 
     def post(self, request):
@@ -174,7 +179,7 @@ class ShipmentConfirmation(TemplateView):
         return render(request, template_name=self.template_name)
 
     def post(self, request):
-        form = self.ShipmentConfirmationForm(request.POST)
+        form = ShipmentConfirmationForm(request.POST)
         if form.is_valid():
             key = form.cleaned_data['shipment_key'].strip()
             if key and Shipment.objects.filter(qr=key).exists():
@@ -196,9 +201,3 @@ class ShipmentConfirmation(TemplateView):
                                body=body,
                                to=[settings.ADMINS[0][1], ])
         message.send()
-
-    class ShipmentConfirmationForm(forms.Form):
-        """
-        Форма с полем ввода ключа для подтверждения получения покупки
-        """
-        shipment_key = forms.CharField(required=True)

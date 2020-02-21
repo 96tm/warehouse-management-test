@@ -1,7 +1,22 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from .models import *
+from .models import Shipment, ShipmentStock, Customer, ModelChangeLogsModel
+from .models import Supplier, Cargo, Category, CargoStock
+
+
+@receiver([post_delete], sender=Category)
+def delete_category_callback(sender, **kwargs):
+    """
+    :param sender: класс Category
+    :param kwargs: instance - удаленная категория
+    :return: None
+    """
+    instance = kwargs['instance']
+    for category in sender.objects.all():
+        if category.parent_id == instance.parent_id:
+            category.parent_id = 0
+            category.save()
 
 
 @receiver([post_save, post_delete], sender=Shipment)
@@ -23,9 +38,10 @@ def save_del_data(sender, instance, created=None, **kwargs):
 
 @receiver([post_save, post_delete], sender=CargoStock)
 def save_del_CargoStock(sender, instance, created=None, **kwargs):
+    supplier = str(instance.cargo.supplier.organization)
     log = ModelChangeLogsModel(table_name=instance._meta.db_table,
                                data='№_поставки: ' + str(instance.cargo_id)
-                                    + ', поставщик: ' + str(instance.cargo.supplier.organization)
+                                    + ', поставщик: ' + supplier
                                     + ', артикул: ' + str(instance.stock_id)
                                     + ', количество: ' + str(instance.number))
     if created:
