@@ -25,7 +25,7 @@ SECRET_KEY = 'kse**o7%+w4)v*jg7+0i3w7!_8pdcmo2fc2d@p=_kw1z)7@+c5'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'lh5yv7.pythonanywhere.com', ]
 
 EMAIL_HOST = 'smtp.mail.ru'
 
@@ -91,7 +91,6 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'warehouse.db'),
-        # 'NAME': os.path.join(BASE_DIR + '/warehouse/', 'db.sqlite3'),
     }
 }
 
@@ -133,3 +132,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/home/LH5yV7/warehouse-management-test/static'

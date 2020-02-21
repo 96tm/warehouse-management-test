@@ -5,6 +5,7 @@ __pycache__/
 test.db
 .idea
 /workspace.xml
+/.vscode
 
 # Django stuff:
 *.log

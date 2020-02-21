@@ -1,3 +1,5 @@
+import requests
+
 from django import forms
 from django.contrib import messages
 from django.forms import formset_factory
@@ -8,7 +10,6 @@ from django.views.generic import View, TemplateView
 from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
-
 from django.views.decorators.cache import never_cache
 
 from .models import Stock, CargoStock
@@ -186,7 +187,7 @@ class ShipmentConfirmation(TemplateView):
                 shipment = Shipment.objects.get(qr=key)
                 if shipment.status == Shipment.SENT:
                     messages.info(request, _('Покупка подтверждена, спасибо!'))
-                    self.send_email_to_admin(request, shipment)
+                    self.send_email_to_admin_mailgun(request, shipment)
                     return redirect(to='warehouse:shipment_success')
         messages.error(request, _('Покупки с таким ключом не найдено'))
         return render(request, template_name=self.template_name)
@@ -201,3 +202,15 @@ class ShipmentConfirmation(TemplateView):
                                body=body,
                                to=[settings.ADMINS[0][1], ])
         message.send()
+
+    def send_email_to_admin_mailgun(self, request, shipment):
+            body = _('Погрузка доставлена,'
+                    + ' вы можете изменить ее статус по ссылке: ')
+            body += (request.get_host()
+                    + reverse('admin:warehouse_shipment_change',
+                            args=(shipment.id,)))                                                                                                                  
+            return requests.post("https://api.mailgun.net/v3/sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org/messages",
+                            auth=("api", "9cc351040b43bf8524fce5e31bedaeaf-7238b007-e0e2b8c2"),
+                            data={"from": "admin <mailgun@sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org>",
+                            "to": [settings.ADMINS[0][1], ], "subject": _('Погрузка доставлена'), "text": body,
+                            "html": '<html>'+body+'</html>'})

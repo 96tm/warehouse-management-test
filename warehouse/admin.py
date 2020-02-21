@@ -1,6 +1,8 @@
 import qrcode
 import io
 import uuid
+import os
+import requests
 
 from django.urls import reverse
 from django.contrib import admin, messages
@@ -423,7 +425,7 @@ class ShipmentAdmin(admin.ModelAdmin):
                 body = _('Здравствуйте, подтвердите '
                          + 'получение покупки: перейдите по ссылке ')
                 body += link + _(' и введите номер из QR-кода во вложении.')
-                self.send_email_to_customer(email, body, obj)
+                self.send_email_to_customer_mailgun(email, body, obj)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super().save_model(request, obj, form, change)
@@ -469,3 +471,16 @@ class ShipmentAdmin(admin.ModelAdmin):
                                body=body, to=[receiver, ],
                                attachments=[attachment, ])
         message.send()
+
+    def send_email_to_customer_mailgun(self, receiver, body, customer):
+        qr = qrcode.make(customer.qr)
+        img = qr.get_image()
+        img.save('1.png')
+        img = open('1.png', 'rb')
+        requests.post("https://api.mailgun.net/v3/sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org/messages",
+                         auth=("api", "9cc351040b43bf8524fce5e31bedaeaf-7238b007-e0e2b8c2"),
+                         files=[("attachment", img)],
+                         data={"from": "admin <mailgun@sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org>",
+                         "to": [receiver, ], "subject": _('Подтверждение получения товара'), "text": body,
+                         "html": '<html>'+body+ '<img src="cid:1.png"></html>'})
+        os.remove('1.png')

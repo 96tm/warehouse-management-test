@@ -17,7 +17,7 @@
                     <input type="submit" title="{% trans "Подтвердить готовность к отправке" %}"
                             class="default list-group-item active"
                             name="_change_status"
-                            value={% trans "Подтвердить готовность к отправке" %}
+                            value="{% trans "Подтвердить готовность к отправке" %}"
                             {{ onclick_attrib }}>
                     {% elif STATUS_VALUE == STATUS_SENT %}
                         <input type="submit"
