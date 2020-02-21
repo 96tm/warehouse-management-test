@@ -30,7 +30,7 @@ def save_del_data(sender, instance, created=None, **kwargs):
     if created:
         log.action = 'create'
     elif created == False:
-        log.action = 'update'
+        log.action = 'edit'
     else:
         log.action = 'delete'
     log.save()
@@ -47,7 +47,7 @@ def save_del_CargoStock(sender, instance, created=None, **kwargs):
     if created:
         log.action = 'create'
     elif created == False:
-        log.action = 'update'
+        log.action = 'edit'
     else:
         log.action = 'delete'
     log.save()
