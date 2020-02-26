@@ -3,7 +3,7 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from .models import Supplier, Customer, Category
+from .models import Supplier, Customer, Category, ModelChangeLogsModel
 from .models import Shipment, Cargo, CargoStock, Stock
 from .models import format_date, get_parent_categories
 from .models import get_shipment_total, get_cargo_total
@@ -12,10 +12,13 @@ from .models import get_shipment_total, get_cargo_total
 class StockPriceFilterForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['price_from'] = forms.FloatField(label='', required=False,
-            widget=forms.NumberInput(attrs={'placeholder': 'From'}))
-        self.fields['price_to'] = forms.FloatField(label='', required=False,
-            widget=forms.NumberInput(attrs={'placeholder': 'To'}))
+        self.fields['price_from'] = forms.FloatField(label='', required=False)
+        attrs = {'placeholder': _('От')}
+        self.fields['price_from'].widget = forms.NumberInput(attrs=attrs)
+        self.fields['price_to'] = forms.FloatField(label='', required=False)
+        attrs = {'placeholder': _('До')}
+        self.fields['price_to'].widget = forms.NumberInput(attrs=attrs)
+
 
 class CategoryForm(forms.ModelForm):
     """
@@ -37,32 +40,22 @@ class CategoryForm(forms.ModelForm):
             self.fields['parent_name'].initial = initial
 
 
-class OrderFormsetsForm(forms.ModelForm):
+class OrderCustomerSelectForm(forms.Form):
     """
-    Форма для заполнения информации о покупке (добавляется несколько товаров)
+    Форма для выбора покупателя на странице покупки
     """
-    class Meta:
-        model = Shipment
-        fields = ('customer', )
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(),
+                                      label=_('Покупатель'))
+    customer.widget = forms.Select(attrs={'disabled': 'disabled'})
 
 
-class OrderForm(forms.Form):
+class OrderItemForm(forms.Form):
     """
-    Форма для заполнения информации о покупке (добавляется один товар)
+    Форма для выбора товара на странице покупки
     """
-    name = forms.ChoiceField(label=_('Ваше имя'))
-    items = forms.ChoiceField(label=_('Выберите товар'))
-    item_count = forms.DecimalField(label=_('Количество товара'),
-                                    initial=1, min_value=1)
-
-    def __init__(self, *args, **kwargs):
-        customers = kwargs.get('initial')['name']
-        customers_list = [(k, v) for k, v in customers]
-        items = kwargs.get('initial')['items']
-        items_list = [(k, v) for k, v in items]
-        super().__init__(*args, **kwargs)
-        self.fields['name'].choices = customers_list
-        self.fields['items'].choices = items_list
+    item = forms.ModelChoiceField(queryset=Stock.objects.all())
+    item.widget = forms.Select(attrs={'required': True})
+    count = forms.DecimalField(required=True, initial=1, min_value=1)
 
 
 class CargoNewForm(forms.ModelForm):
@@ -88,7 +81,8 @@ class CargoFillForm(forms.ModelForm):
     cargo_supplier.widget = forms.TextInput(attrs={'readonly': 'readonly'})
     number = forms.IntegerField(label=_('Количество позиций'), initial=1,
                                 min_value=1)
-    stock_name = forms.ChoiceField(label=_("Наименование товара"), required=True)
+    stock_name = forms.ChoiceField(label=_("Наименование товара"),
+                                   required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -156,9 +150,9 @@ class ShipmentForm(forms.ModelForm):
     shipment_status = forms.CharField(max_length=9, label=_('Статус заказа'))
     shipment_qr = forms.CharField(max_length=50, label=_('Код подтверждения'))
 
-    field_order = ['number_of_items', 'total', 'customer_name',
+    field_order = ('number_of_items', 'total', 'customer_name',
                    'shipment_id', 'shipment_date',
-                   'shipment_status', 'shipment_qr']
+                   'shipment_status', 'shipment_qr', )
 
     # добавляем инициализацию дополнительных полей при создании формы
     def __init__(self, *args, **kwargs):
@@ -253,8 +247,8 @@ class SupplierForm(forms.ModelForm):
     """
     class Meta:
         model = Supplier
-        fields = ['organization', 'phone_number', 'email',
-                  'address', 'legal_details', 'contact_info', 'categories', ]
+        fields = ('organization', 'phone_number', 'email',
+                  'address', 'legal_details', 'contact_info', 'categories', )
         widgets = {'organization': forms.Textarea(attrs={'rows': '2',
                                                          'cols': '80'}),
                    'address': forms.Textarea(attrs={'rows': '2',
@@ -283,3 +277,17 @@ class SupplierForm(forms.ModelForm):
                        .select_related('category'))
             self.fields['supplier_categories'].initial = [i.category
                                                           for i in initial]
+
+
+class ShipmentConfirmationForm(forms.Form):
+    """
+    Форма с полем ввода ключа для подтверждения получения покупки
+    """
+    shipment_key = forms.CharField(required=True)
+
+
+class ModelChangeLogsModelForm(forms.ModelForm):
+
+    class Meta:
+        model = ModelChangeLogsModel
+        fields = '__all__'

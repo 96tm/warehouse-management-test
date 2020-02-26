@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import messages
-from django.urls import reverse
+from django.forms import formset_factory
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
@@ -8,19 +9,21 @@ from django.core.mail import EmailMessage
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 
-from django.views.generic.edit import FormView
 from django.views.decorators.cache import never_cache
 
-from .models import Customer, Stock, CargoStock
-from .models import Cargo, Shipment, ShipmentStock, CargoDetails
-from .forms import OrderForm, CargoNewForm, CargoFillForm
-from .forms import StockForm, OrderFormsetsForm
+from .models import Stock, CargoStock
+from .models import CargoDetails, ShipmentStock
+from .models import Cargo, Shipment
+from .forms import CustomerForm, OrderItemForm, OrderCustomerSelectForm
+from .forms import CargoNewForm, CargoFillForm, StockForm, ShipmentConfirmationForm
 
 
 def index(request):
     return render(request, 'warehouse/index.html')
 
 
+# не кэшируем страницу для нормальной работы jQuery кода
+# по добавлению formsets
 @method_decorator(never_cache, name='dispatch')
 class CargoFormsetsView(View):
     """
@@ -63,89 +66,56 @@ class CargoFormsetsView(View):
 
 
 @method_decorator(never_cache, name='dispatch')
-class OrderFormsetsView(View):
+class OrderView(View):
     """
-    Class-based view для обработки страницы
-    покупки с добавлением нескольких товаров
-    в одной форме
+    Class-based view для обработки страницы покупки
     """
-    stock_formset = forms.formset_factory(form=StockForm,
-                                          max_num=50,
-                                          min_num=1,
-                                          extra=0)
-    template = 'warehouse/order_formsets.html'
+    OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
 
     def post(self, request):
-        form = OrderFormsetsForm(request.POST)
-        formset = self.stock_formset(request.POST)
-        context = {'form': form, 'formset': formset}
-        if form.is_valid() and formset.is_valid() and formset.cleaned_data:
-            instance = form.save()
-            stocks = {}
-            for stock in formset.cleaned_data:
-                name = stock['name']
-                stocks[name] = stocks.get(name, 0) + stock['number']
-            for name, number in stocks.items():
-                stock = Stock.objects.get(name=name)
-                ShipmentStock.objects.create(shipment=instance,
-                                             stock=stock, number=number)
-            messages.info(request, _('Заявка отправлена'))
-            return redirect(to='warehouse:index')
+        customer_form = CustomerForm(request.POST)
+        item_formset = self.OrderItemFormSet(request.POST)
+        customer_selectform = OrderCustomerSelectForm(request.POST)
+
+        # FIXME: Добавить обработку неправильно введённых форм
+
+        if request.POST.get('reg'):
+            if customer_selectform.is_valid():
+                customer = customer_selectform.cleaned_data.get('customer')
         else:
-            if not formset.cleaned_data:
-                context['formset'] = self.stock_formset()
-            return render(request, self.template, context)
+            if customer_form.is_valid():
+                customer = customer_form.save()
+
+        sh = Shipment.objects.create(customer=customer)
+
+        if item_formset.is_valid():
+            stocks = dict()
+            for form in item_formset:
+                name = form.cleaned_data['item']
+                stocks[name] = stocks.get(name, 0) + form.cleaned_data.get('count')
+            for stock, count in stocks.items():
+                ShipmentStock.objects.create(shipment=sh, stock=stock, number=count)
+
+        messages.info(request, _('Заявка отправлена'))
+        return redirect('warehouse:order_successful')
 
     def get(self, request):
-        form = OrderFormsetsForm()
-        formset = self.stock_formset()
-        context = {'form': form, 'formset': formset}
-        return render(request, self.template, context=context)
-
-
-class OrderView(FormView):
-    """
-    Class-based view для обработки страницы
-    поставки с добавлением одного товара
-    в одной форме
-    """
-    template_name = "warehouse/order.html"
-    form_class = OrderForm
-    # success_url = "order_successful"
-
-    def form_valid(self, form):
-        # return super(OrderView, self).form_valid(form)
-        data = form.cleaned_data
-        customer = Customer.objects.get(id=data['name'])
-        product = Stock.objects.get(article=data['items'])
+        customer_form = CustomerForm()
+        item_formset = self.OrderItemFormSet()
+        customer_selectform = OrderCustomerSelectForm()
         context = {
-            'customer_name': customer.full_name,
-            'customer_id': customer.id,
-            'product_name': product.name,
-            'product_count': data['item_count'],
+            'customer_form': customer_form,
+            'item_formset': item_formset,
+            'customer_selectform': customer_selectform,
         }
-        sh = Shipment.objects.create(customer=customer)
-        ShipmentStock.objects.create(shipment=sh,
-                                     stock=product,
-                                     number=int(data['item_count']))
-        return render(self.request, 'warehouse/order_successful.html', context)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        customers_list = (Customer.objects
-                          .all()
-                          .order_by('full_name')
-                          .values_list('id', 'full_name'))
-        items_list = Stock.objects.all().values_list('article', 'name')
-        initial.update({'name': customers_list,
-                        'items': items_list})
-        return initial
+        return render(request, 'warehouse/order.html', context)
 
 
 class OrderSuccessfulView(View):
     """
     Class-based view для обработки перенаправления после покупки
     """
+
     def get(self, request):
         return render(request, 'warehouse/order_successful.html')
 
@@ -209,7 +179,7 @@ class ShipmentConfirmation(TemplateView):
         return render(request, template_name=self.template_name)
 
     def post(self, request):
-        form = self.ShipmentConfirmationForm(request.POST)
+        form = ShipmentConfirmationForm(request.POST)
         if form.is_valid():
             key = form.cleaned_data['shipment_key'].strip()
             if key and Shipment.objects.filter(qr=key).exists():
@@ -226,14 +196,8 @@ class ShipmentConfirmation(TemplateView):
                  + ' вы можете изменить ее статус по ссылке: ')
         body += (request.get_host()
                  + reverse('admin:warehouse_shipment_change',
-                           args=(shipment.id, )))
+                           args=(shipment.id,)))
         message = EmailMessage(subject=_('Погрузка доставлена'),
                                body=body,
                                to=[settings.ADMINS[0][1], ])
         message.send()
-
-    class ShipmentConfirmationForm(forms.Form):
-        """
-        Форма с полем ввода ключа для подтверждения получения покупки
-        """
-        shipment_key = forms.CharField(required=True)
