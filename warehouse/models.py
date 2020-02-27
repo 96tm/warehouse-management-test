@@ -5,6 +5,8 @@ from django.db import models
 from django.conf import settings
 
 from django.utils.translation import gettext as _
+from mptt.fields import TreeForeignKey
+from mptt.models import MPTTModel
 
 
 def format_date(date):
@@ -29,39 +31,19 @@ def get_shipment_total(obj):
                 for row in obj.shipmentstock_set.all()])
 
 
-def get_parent_categories(category_pk):
-    """
-    Получить список доступных для выбора базовых категорий
-    :param category_pk:первичный ключ категории
-    :return: list: список кортежей вида (pk, name)
-    """
-    categories = (Category.objects.exclude(pk=category_pk).values('parent_id',
-                                                                  'pk',
-                                                                  'name'))
-    categories_list = sorted(categories, key=lambda x: x['parent_id'])
-    to_remove = [category_pk, ]
-    choices = [(0, _('Нет базовой категории')), ]
-    for category in categories_list:
-        if category['parent_id'] not in to_remove:
-            choices.append((category['pk'], category['name']))
-        else:
-            to_remove.append(category['pk'])
-    return choices
-
-
-class Category(models.Model):
+class CategoryMPTT(MPTTModel):
     """
     Таблица категорий товаров
     """
     class Meta:
         verbose_name = _('Категория')
         verbose_name_plural = _('Категории')
-        unique_together = (('name', 'parent_id'), )
 
-    name = models.CharField(max_length=80,
-                            blank=False, verbose_name=_('Категория'))
-    parent_id = models.IntegerField(default=0,
-                                    verbose_name=_('Базовая категория'))
+    class MPTTMeta:
+        order_insertion_by = ['name']
+
+    name = models.CharField(max_length=50, unique=True, verbose_name=_('Наименование категории'))
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name=_('Надкатегория'))
 
     def __str__(self):
         return self.name
@@ -83,7 +65,7 @@ class Supplier(models.Model):
     legal_details = models.TextField(verbose_name=_('Реквизиты'))
     contact_info = models.TextField(null=True,
                                     verbose_name=_('Контактная информация'))
-    categories = models.ManyToManyField(Category, through='SupplierCategory')
+    categories = models.ManyToManyField(CategoryMPTT, through='SupplierCategory')
 
     def __str__(self):
         return self.organization
@@ -121,8 +103,8 @@ class Stock(models.Model):
                             verbose_name=_('Наименование'))
     price = models.FloatField(verbose_name=_('Цена'))
     number = models.IntegerField(verbose_name=_('Количество на складе'))
-    category = models.ForeignKey(Category, on_delete=models.CASCADE,
-                                 verbose_name=_('Категория'))
+    category = TreeForeignKey(CategoryMPTT, on_delete=models.CASCADE,
+                              verbose_name=_('Категория'))
 
     def __str__(self):
         return self.name
@@ -244,7 +226,7 @@ class SupplierCategory(models.Model):
 
     supplier = models.ForeignKey(Supplier,
                                  on_delete=models.CASCADE)
-    category = models.ForeignKey(Category,
+    category = models.ForeignKey(CategoryMPTT,
                                  on_delete=models.CASCADE)
 
     def __str__(self):
@@ -263,3 +245,6 @@ class ModelChangeLogsModel(models.Model):
                               verbose_name=_('Действие'))
     date = models.DateTimeField(auto_now_add=True,
                                 verbose_name='Дата')
+
+    def __str__(self):
+        return _('операция - ') + self.action

@@ -3,9 +3,9 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from .models import Supplier, Customer, Category, ModelChangeLogsModel
+from .models import Supplier, Customer, CategoryMPTT, ModelChangeLogsModel
 from .models import Shipment, Cargo, CargoStock, Stock
-from .models import format_date, get_parent_categories
+from .models import format_date
 from .models import get_shipment_total, get_cargo_total
 
 
@@ -18,26 +18,6 @@ class StockPriceFilterForm(forms.Form):
         self.fields['price_to'] = forms.FloatField(label='', required=False)
         attrs = {'placeholder': _('До')}
         self.fields['price_to'].widget = forms.NumberInput(attrs=attrs)
-
-
-class CategoryForm(forms.ModelForm):
-    """
-    Форма для отображения категории в интерфейсе кладовщика
-    """
-    class Meta:
-        model = Category
-        fields = ('name', )
-    parent_name = forms.ChoiceField(label=_('Базовая категория'))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance:
-            choices = get_parent_categories(self.instance.pk)
-            initial = ((self.instance.parent_id, self.instance.name)
-                       if self.instance.parent_id
-                       else choices[0])
-            self.fields['parent_name'].choices = choices
-            self.fields['parent_name'].initial = initial
 
 
 class OrderCustomerSelectForm(forms.Form):
@@ -259,7 +239,7 @@ class SupplierForm(forms.ModelForm):
                                                          'cols': '80'})}
 
     supplier_categories = forms.ModelMultipleChoiceField(
-        queryset=Category.objects.all(),
+        queryset=CategoryMPTT.objects.all(),
         label=_(''),
         required=False,
         widget=FilteredSelectMultiple(

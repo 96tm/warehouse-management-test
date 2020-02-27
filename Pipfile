@@ -10,6 +10,7 @@ django = "*"
 qrcode = "*"
 pillow = "*"
 pylint = "*"
+django-mptt = "*"
 
 [requires]
 python_version = "3.8"
