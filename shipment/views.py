@@ -102,7 +102,7 @@ class ShipmentConfirmation(TemplateView):
                 shipment = Shipment.objects.get(qr=key)
                 if shipment.status == Shipment.SENT:
                     messages.info(request, _('Покупка подтверждена, спасибо!'))
-                    self.send_email_to_admin_mailgun(request, shipment)
+                    self.send_email_to_admin(request, shipment)
                     return redirect(to='shipment:shipment_success')
         messages.error(request, _('Покупки с таким ключом не найдено'))
         return render(request, template_name=self.template_name)
@@ -117,24 +117,3 @@ class ShipmentConfirmation(TemplateView):
                                body=body,
                                to=[settings.ADMINS[0][1], ])
         message.send()
-
-    def send_email_to_admin_mailgun(self, request, shipment):
-        mailgun_url = ("https://api.mailgun.net/v3/"
-                       + "sandboxb9935d22024f479d9c4f54ace37bb83b."
-                       + "mailgun.org/"
-                       + "messages")
-        auth = ("api", "9cc351040b43bf8524fce5e31bedaeaf-7238b007-e0e2b8c2")
-        sender = ("admin <mailgun@"
-                  + "sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org>")
-        body = _('Погрузка доставлена,'
-                 + ' вы можете изменить ее статус по ссылке: ')
-        body += (request.get_host()
-                 + reverse('admin:shipment_shipment_change',
-                           args=(shipment.id,)))
-        return requests.post(mailgun_url,
-                             auth=auth,
-                             data={"from": sender,
-                                   "to": [settings.ADMINS[0][1], ],
-                                   "subject": _('Погрузка доставлена'),
-                                   "text": body,
-                                   "html": '<html>'+body+'</html>'})
