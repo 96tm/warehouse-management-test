@@ -44,13 +44,22 @@ ADMINS = [('Admin', 'den_se_in@mail.ru')]
 # Application definition
 
 INSTALLED_APPS = [
+    'category.apps.CategoryConfig',
     'warehouse.apps.WarehouseConfig',
+    'mainpage.apps.MainPageConfig',
+    'actionlog.apps.ActionLogConfig',
+    'customer.apps.CustomerConfig',
+    'supplier.apps.SupplierConfig',
+    'cargo.apps.CargoConfig',
+    'shipment.apps.ShipmentConfig',
+    'common.apps.CommonConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mptt',
 ]
 
 MIDDLEWARE = [

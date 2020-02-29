@@ -1,0 +1,10 @@
+{% extends 'mainpage/base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Заказ принят" %}
+{% endblock %}
+
+{% block content %}
+    <a href="{% url 'mainpage:index' %}">{% trans "На главную страницу" %}</a>
+{% endblock %}

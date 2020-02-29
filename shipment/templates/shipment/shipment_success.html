@@ -1,0 +1,20 @@
+{% extends 'mainpage/base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Подтверждение получения покупки" %}
+{% endblock title %}
+
+{% block header-name %}
+    {% trans "Подтверждение получения покупки" %}
+{% endblock header-name %}
+
+{% block content %}
+    <div class="submit-row">
+        <p class="deletelink-box">
+            <a  href="{% url 'mainpage:index' %}" class="button default">
+                {% trans "На главную страницу" %}
+            </a>
+        </p>
+    </div>
+{% endblock %}
