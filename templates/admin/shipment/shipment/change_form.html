@@ -1,0 +1,33 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+{% load admin_urls %}
+    {% block submit_buttons_bottom %}
+            <div class="submit-row list-group">
+                <p class="deletelink-box">
+                    <a href="{% url 'admin:shipment_shipment_delete' object_id %}"
+                       class="deletelink">{% trans "Удалить" %}</a>
+                </p>
+            {% if STATUS_VALUE != STATUS_CANCELLED and STATUS_VALUE != STATUS_DONE%}
+                <input type="submit" title="{% trans "Отменить заказ" %}"
+                       class="default list-group-item active"
+                       name="_cancel" value="{% trans "Отменить заказ" %}"
+                       {{ onclick_attrib }}>
+
+                {% if STATUS_VALUE == STATUS_CREATED and SHIPMENT_AVAILABLE%}
+                    <input type="submit" 
+                           title="{% trans "Подтвердить готовность к отправке" %}"
+                           class="default list-group-item active"
+                           name="_change_status"
+                           value="{% trans "Подтвердить готовность к отправке" %}"
+                           {{ onclick_attrib }}>
+                {% elif STATUS_VALUE == STATUS_SENT %}
+                    <input type="submit"
+                            title="{% trans "Подтвердить получение покупателем" %}"
+                            class="default list-group-item active"
+                            name="_change_status"
+                            value="{% trans "Подтвердить получение покупателем" %}"
+                            {{ onclick_attrib }}>
+                {% endif %}
+            </div>
+     {% endif %}
+    {% endblock %}

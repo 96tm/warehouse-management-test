@@ -20,8 +20,8 @@
                 {% endif %}
             {% endfor %}
         </form>
-        <input form="from_to" type="submit" class="submit" value="Принять"></input>
-        <input form="all" type="submit" class="submit" value="Сбросить"></input>
+        <input form="from_to" type="submit" class="submit" value= "{% trans "Принять" %}"></input>
+        <input form="all" type="submit" class="submit" value="{% trans "Сбросить" %}"></input>
     </li>
 {% endwith %}
 </ul>
