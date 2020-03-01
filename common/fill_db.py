@@ -32,25 +32,25 @@ def fill_db():
     c8.save()
     categories = (c1, c2, c3, c4, c5, c6, c7, c8, )
 
-    stocks = (Stock(pk=100, category=categories[2],
+    stocks = (Stock(pk=1, article=100, category=categories[2],
                     name='Телевизор LG', price=10000,
                     number=10),
-              Stock(pk=101, category=categories[2],
+              Stock(pk=2, article=101, category=categories[2],
                     name='Телевизор Samsung', price=11000,
                     number=9),
-              Stock(pk=102, category=categories[2],
+              Stock(pk=3, article=102, category=categories[2],
                     name='Телевизор Sony', price=12000,
                     number=20),
-              Stock(pk=103, category=categories[6],
+              Stock(pk=4, article=103, category=categories[6],
                     name='Стиральная машина LG', price=10500,
                     number=5),
-              Stock(pk=104, category=categories[4],
+              Stock(pk=5, article=104, category=categories[4],
                     name='Смартфон Samsung Galaxy Note 8', price=13000,
                     number=18),
-              Stock(pk=105, category=categories[5],
+              Stock(pk=6, article=105, category=categories[5],
                     name='Холодильник LG', price=10000,
                     number=12),
-              Stock(pk=106, category=categories[5],
+              Stock(pk=7, article=106, category=categories[5],
                     name='Холодильник Samsung', price=15000,
                     number=0),
               )
@@ -84,10 +84,10 @@ def fill_db():
     for i in range(7):
         sc = SupplierCategory(supplier=suppliers[0],
                               category=categories[i])
-        sc.save()                              category=categories[i])
+        sc.save()
         sc = SupplierCategory(supplier=suppliers[1],
                               category=categories[i])
-        sc.save()                            category=categories[i])
+        sc.save()
     for i in range(6):
         sc = SupplierCategory(supplier=suppliers[2],
                               category=categories[i])

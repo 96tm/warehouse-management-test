@@ -13,7 +13,7 @@ class Stock(models.Model):
         verbose_name = _('Товар')
         verbose_name_plural = _('Товары')
 
-    article = models.IntegerField(primary_key=True,
+    article = models.IntegerField(unique=True,
                                   verbose_name=_('Артикул'))
     name = models.CharField(max_length=80,
                             verbose_name=_('Наименование'))

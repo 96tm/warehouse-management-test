@@ -17,6 +17,8 @@ from .forms import OrderCustomerSelectForm
 from customer.forms import CustomerForm
 from common.models import ShipmentStock
 
+from django.http import Http404
+
 
 def shipment_success(request):
     """
@@ -91,21 +93,14 @@ class ShipmentConfirmation(TemplateView):
     """
     template_name = 'shipment/shipment_confirmation.html'
 
-    def get(self, request):
-        return render(request, template_name=self.template_name)
-
-    def post(self, request):
-        form = ShipmentConfirmationForm(request.POST)
-        if form.is_valid():
-            key = form.cleaned_data['shipment_key'].strip()
-            if key and Shipment.objects.filter(qr=key).exists():
-                shipment = Shipment.objects.get(qr=key)
-                if shipment.status == Shipment.SENT:
-                    messages.info(request, _('Покупка подтверждена, спасибо!'))
-                    self.send_email_to_admin_mailgun(request, shipment)
-                    return redirect(to='shipment:shipment_success')
-        messages.error(request, _('Покупки с таким ключом не найдено'))
-        return render(request, template_name=self.template_name)
+    def get(self, request, qr):
+        if qr and Shipment.objects.filter(qr=qr).exists():
+            shipment = Shipment.objects.get(qr=qr)
+            if shipment.status == Shipment.SENT:
+                messages.info(request, _('Покупка подтверждена, спасибо!'))
+                self.send_email_to_admin(request, shipment)
+                return render(request, template_name=self.template_name)
+        raise Http404(_('Покупка не найдена'))
 
     def send_email_to_admin(self, request, shipment):
         body = _('Погрузка доставлена,'
@@ -117,24 +112,3 @@ class ShipmentConfirmation(TemplateView):
                                body=body,
                                to=[settings.ADMINS[0][1], ])
         message.send()
-
-    def send_email_to_admin_mailgun(self, request, shipment):
-        mailgun_url = ("https://api.mailgun.net/v3/"
-                       + "sandboxb9935d22024f479d9c4f54ace37bb83b."
-                       + "mailgun.org/"
-                       + "messages")
-        auth = ("api", "9cc351040b43bf8524fce5e31bedaeaf-7238b007-e0e2b8c2")
-        sender = ("admin <mailgun@"
-                  + "sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org>")
-        body = _('Погрузка доставлена,'
-                 + ' вы можете изменить ее статус по ссылке: ')
-        body += (request.get_host()
-                 + reverse('admin:shipment_shipment_change',
-                           args=(shipment.id,)))
-        return requests.post(mailgun_url,
-                             auth=auth,
-                             data={"from": sender,
-                                   "to": [settings.ADMINS[0][1], ],
-                                   "subject": _('Погрузка доставлена'),
-                                   "text": body,
-                                   "html": '<html>'+body+'</html>'})

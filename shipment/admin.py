@@ -80,11 +80,11 @@ class ShipmentAdmin(admin.ModelAdmin):
                     shipment_stock.stock.save()
                 obj.qr = str(obj.id) + str(uuid.uuid4())
                 email = obj.customer.email
-                link = self.get_confirmation_link(request.get_host())
+                link = self.get_confirmation_link(request.get_host(), obj.qr)
                 body = _('Здравствуйте, подтвердите '
                          + 'получение покупки: перейдите по ссылке ')
-                body += link + _(' и введите номер из QR-кода во вложении.')
-                self.send_email_to_customer_mailgun(email, body, obj)
+                body += _('из QR-кода во вложении (') + link + ').'
+                self.send_email_to_customer(email, body, obj, link)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super().save_model(request, obj, form, change)
@@ -116,11 +116,12 @@ class ShipmentAdmin(admin.ModelAdmin):
         img.save(byte_stream, 'PNG')
         return byte_stream.getvalue()
 
-    def get_confirmation_link(self, host):
-        return str(host) + reverse('shipment:shipment_confirmation')
+    def get_confirmation_link(self, host, qr):
+        return str(host) + reverse('shipment:shipment_confirmation',
+                                   args=(qr, ))
 
-    def send_email_to_customer(self, receiver, body, customer):
-        qr = self.get_qr(customer.qr)
+    def send_email_to_customer(self, receiver, body, customer, link):
+        qr = self.get_qr(link)
         attachment = MIMEBase('application', 'octet-stream')
         attachment.set_payload(qr)
         encode_base64(attachment)
@@ -130,26 +131,3 @@ class ShipmentAdmin(admin.ModelAdmin):
                                body=body, to=[receiver, ],
                                attachments=[attachment, ])
         message.send()
-
-    def send_email_to_customer_mailgun(self, receiver, body, customer):
-        qr = qrcode.make(customer.qr)
-        img = qr.get_image()
-        img.save('1.png')
-        img = open('1.png', 'rb')
-        mailgun_url = ("https://api.mailgun.net/v3/"
-                       + "sandboxb9935d22024f479d9c4f54ace37bb83b."
-                       + "mailgun.org/"
-                       + "messages")
-        auth = ("api", "9cc351040b43bf8524fce5e31bedaeaf-7238b007-e0e2b8c2")
-        sender = ("admin <mailgun@"
-                  + "sandboxb9935d22024f479d9c4f54ace37bb83b.mailgun.org>")
-        html = '<html>' + body + '<img src="cid:1.png"></html>'
-        requests.post(mailgun_url,
-                      auth=auth,
-                      files=[("attachment", img)],
-                      data={"from": sender,
-                            "to": [receiver, ],
-                            "subject": _('Подтверждение получения товара'),
-                            "text": body,
-                            "html": html})
-        os.remove('1.png')
