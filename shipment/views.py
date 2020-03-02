@@ -17,6 +17,8 @@ from .forms import OrderCustomerSelectForm
 from customer.forms import CustomerForm
 from common.models import ShipmentStock
 
+from django.http import Http404
+
 
 def shipment_success(request):
     """
@@ -91,21 +93,14 @@ class ShipmentConfirmation(TemplateView):
     """
     template_name = 'shipment/shipment_confirmation.html'
 
-    def get(self, request):
-        return render(request, template_name=self.template_name)
-
-    def post(self, request):
-        form = ShipmentConfirmationForm(request.POST)
-        if form.is_valid():
-            key = form.cleaned_data['shipment_key'].strip()
-            if key and Shipment.objects.filter(qr=key).exists():
-                shipment = Shipment.objects.get(qr=key)
-                if shipment.status == Shipment.SENT:
-                    messages.info(request, _('Покупка подтверждена, спасибо!'))
-                    self.send_email_to_admin(request, shipment)
-                    return redirect(to='shipment:shipment_success')
-        messages.error(request, _('Покупки с таким ключом не найдено'))
-        return render(request, template_name=self.template_name)
+    def get(self, request, qr):
+        if qr and Shipment.objects.filter(qr=qr).exists():
+            shipment = Shipment.objects.get(qr=qr)
+            if shipment.status == Shipment.SENT:
+                messages.info(request, _('Покупка подтверждена, спасибо!'))
+                self.send_email_to_admin(request, shipment)
+                return render(request, template_name=self.template_name)
+        raise Http404(_('Покупка не найдена'))
 
     def send_email_to_admin(self, request, shipment):
         body = _('Погрузка доставлена,'

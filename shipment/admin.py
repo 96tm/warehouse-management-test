@@ -80,11 +80,11 @@ class ShipmentAdmin(admin.ModelAdmin):
                     shipment_stock.stock.save()
                 obj.qr = str(obj.id) + str(uuid.uuid4())
                 email = obj.customer.email
-                link = self.get_confirmation_link(request.get_host())
+                link = self.get_confirmation_link(request.get_host(), obj.qr)
                 body = _('Здравствуйте, подтвердите '
                          + 'получение покупки: перейдите по ссылке ')
-                body += link + _(' и введите номер из QR-кода во вложении.')
-                self.send_email_to_customer(email, body, obj)
+                body += _('из QR-кода во вложении (') + link + ').'
+                self.send_email_to_customer(email, body, obj, link)
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super().save_model(request, obj, form, change)
@@ -116,11 +116,12 @@ class ShipmentAdmin(admin.ModelAdmin):
         img.save(byte_stream, 'PNG')
         return byte_stream.getvalue()
 
-    def get_confirmation_link(self, host):
-        return str(host) + reverse('shipment:shipment_confirmation')
+    def get_confirmation_link(self, host, qr):
+        return str(host) + reverse('shipment:shipment_confirmation',
+                                   args=(qr, ))
 
-    def send_email_to_customer(self, receiver, body, customer):
-        qr = self.get_qr(customer.qr)
+    def send_email_to_customer(self, receiver, body, customer, link):
+        qr = self.get_qr(link)
         attachment = MIMEBase('application', 'octet-stream')
         attachment.set_payload(qr)
         encode_base64(attachment)

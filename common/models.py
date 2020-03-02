@@ -62,7 +62,8 @@ class CargoStock(models.Model):
     Таблица многие-ко-многим поставка-товар
     """
     class Meta:
-        unique_together = (("cargo", "stock"),)
+        constraints = [models.UniqueConstraint(fields=['cargo', 'stock'],
+                                               name='cargo_stock_unique')]
         verbose_name = _('Поставка')
         verbose_name_plural = _('Поставки')
 

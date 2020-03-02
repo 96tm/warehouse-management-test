@@ -7,32 +7,14 @@
 
 {% block header-name %}
     {% trans "Подтверждение получения покупки" %}
-{% endblock %}
+{% endblock header-name %}
 
 {% block content %}
-    <form method="POST" action="{% url 'shipment:shipment_confirmation' %}"
-              name="shipment_confirmation_form">
-        {% csrf_token %}
-        <formset class="module aligned">
-            <div class="form-row">
-            <input type="text" name="shipment_key"
-                   size="35" placeholder="{% trans "Введите ключ из полученного email" %}">
-            </div>
-        </formset>
-        <div class="submit-row">
-            <p class="deletelink-box">
-                <input type="submit" name="submit_button"  class="default"
-                       value="{% trans "Отправить" %}"
-                       title="{% trans "Отправить" %}">
-            </p>
-        </div>
-    </form>
-
-    {% if error_messages %}
-        {% for error_message in error_messages %}
-            <div class="alert alert-danger">
-                <strong>{{ error_message|escape }}</strong>
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endblock content %}
+    <div class="submit-row">
+        <p class="deletelink-box">
+            <a  href="{% url 'mainpage:index' %}" class="button default">
+                {% trans "На главную страницу" %}
+            </a>
+        </p>
+    </div>
+{% endblock %}
