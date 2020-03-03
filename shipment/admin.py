@@ -1,8 +1,6 @@
 import qrcode
 import io
 import uuid
-import os
-import requests
 
 from django.urls import reverse
 from django.contrib import admin, messages
