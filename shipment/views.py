@@ -91,18 +91,15 @@ class OrderView(View):
         item_formset = self.OrderItemFormSet(request.POST)
         customer_selectform = OrderCustomerSelectForm(request.POST)
 
-        # FIXME: Добавить обработку неправильно введённых форм
+        if (customer_selectform.is_valid() or customer_form.is_valid()) and item_formset.is_valid():
 
-        if request.POST.get('reg'):
-            if customer_selectform.is_valid():
+            if request.POST.get('reg'):
                 customer = customer_selectform.cleaned_data.get('customer')
-        else:
-            if customer_form.is_valid():
+            else:
                 customer = customer_form.save()
 
-        sh = Shipment.objects.create(customer=customer)
+            sh = Shipment.objects.create(customer=customer)
 
-        if item_formset.is_valid():
             stocks = dict()
             for form in item_formset:
                 name = form.cleaned_data['item']
@@ -110,8 +107,11 @@ class OrderView(View):
             for stock, count in stocks.items():
                 ShipmentStock.objects.create(shipment=sh, stock=stock, number=count)
 
-        messages.info(request, _('Заявка отправлена'))
-        return redirect('shipment:order_successful')
+            messages.info(request, _('Заявка отправлена'))
+            return redirect('shipment:order_successful')
+
+        else:
+            return redirect('shipment:order')
 
     def get(self, request):
         if self.request.is_ajax():
