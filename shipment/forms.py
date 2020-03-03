@@ -1,7 +1,9 @@
 from django import forms
 
 from django.utils.translation import gettext as _
+from mptt.forms import TreeNodeChoiceField
 
+from category.models import Category
 from .models import Shipment
 from common.models import format_date
 from .models import get_shipment_total
@@ -74,6 +76,10 @@ class OrderItemForm(forms.Form):
     """
     Форма для выбора товара на странице покупки
     """
+    category = TreeNodeChoiceField(queryset=Category.objects.all(),
+                                   level_indicator=u'+--', required=False)
+    category.widget = forms.Select(attrs={'class': "category"})
     item = forms.ModelChoiceField(queryset=Stock.objects.all())
     item.widget = forms.Select(attrs={'required': True})
     count = forms.DecimalField(required=True, initial=1, min_value=1)
+

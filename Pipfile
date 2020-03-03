@@ -13,6 +13,7 @@ pillow = "*"
 pylint = "*"
 pylint-django = "*"
 django-mptt = "*"
+requests = "*"
 
 [requires]
 python_version = "3.8"
