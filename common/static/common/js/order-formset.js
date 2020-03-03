@@ -26,4 +26,17 @@ $(document).ready(function(){
             $('#id_contact_info').removeAttr('disabled');
         }
      });
+
+    $('fieldset').on('change', '.category', function () {
+        var item = $(this).next();
+        item.empty();
+        $.getJSON(location.href, {'category': $(this).val()})
+            .done(function (data) {
+                item.prepend('<option value="">---------</option>');
+                $.each(data, function(pk, value) {
+                    item.append('<option value="' + pk + '">' + value + '</option>');
+            });
+        })
+    })
+
 })

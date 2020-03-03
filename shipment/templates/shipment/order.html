@@ -35,6 +35,7 @@
             <h2> {% trans "Выберите товары" %}</h2>
             {% for form in item_formset %}
                 <div class="form-row order-formset">
+                    {{ form.category }}
                     {{ form.item }}
                     {{ form.count }}
                 </div>
