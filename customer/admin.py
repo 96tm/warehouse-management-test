@@ -35,4 +35,3 @@ class CustomerAdmin(admin.ModelAdmin):
          {'fields': ('full_name', 'phone_number',
                      'email', 'contact_info')}),
     )
-

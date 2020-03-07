@@ -4,16 +4,15 @@ from django.views.generic import View
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 
 from warehouse.models import Stock
 from warehouse.forms import StockForm
 from common.models import CargoStock
-from .models import Cargo, CargoDetails
-from .forms import CargoNewForm, CargoFillForm
+from .forms import CargoNewForm
 
 
-# не кэшируем страницу для нормальной работы jQuery кода
+# не кэшируем страницу для нормальной работы кода jQuery
 # по добавлению formsets
 @method_decorator(never_cache, name='dispatch')
 class CargoFormsetsView(View):
@@ -54,45 +53,3 @@ class CargoFormsetsView(View):
         formset = self.stock_formset()
         context = {'form': form, 'formset': formset}
         return render(request, self.template, context)
-
-
-def cargo_new(request):
-    """
-    View для выбора поставщика
-    при добавлении товаров с использованием
-    таблицы CargoDetails
-    """
-    if request.method == "POST":
-        form = CargoNewForm(request.POST)
-        if form.is_valid():
-            cargo = form.save()
-            return redirect('cargo:cargo_detail', pk=cargo.pk)
-    else:
-        form = CargoNewForm()
-    return render(request, 'cargo/cargo_new.html', {'form': form})
-
-
-def cargo_fill(request, pk):
-    """
-    View для добавления информации о товаре
-    при использовании таблицы CargoDetails
-    """
-    cargo = get_object_or_404(Cargo, pk=pk)
-    items = CargoDetails.objects.filter(order_number=pk)
-    if request.method == 'POST':
-        form = CargoFillForm(request.POST)
-        if form.is_valid():
-            form.save()
-    form = CargoFillForm(initial={'order_number': pk})
-    context = {'cargo': cargo,
-               'items': items,
-               'form': form}
-    return render(request, 'cargo/cargo_fill.html', context)
-
-
-def cargo_list(request):
-    """
-    View для отображения списка поставок
-    """
-    return render(request, 'cargo/cargo_list.html',
-                  {'cargo_all': Cargo.objects.all()})

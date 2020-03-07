@@ -1,10 +1,10 @@
 from django import forms
 
-from .models import ModelChangeLogsModel
+from .models import LogModel
 
 
-class ModelChangeLogsModelForm(forms.ModelForm):
+class LogModelForm(forms.ModelForm):
 
     class Meta:
-        model = ModelChangeLogsModel
+        model = LogModel
         fields = '__all__'

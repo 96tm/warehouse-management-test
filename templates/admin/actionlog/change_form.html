@@ -1,0 +1,19 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+{% load static %}
+    {% block submit_buttons_bottom %}
+        <div class="submit-row list-group">
+        <p class="deletelink-box">
+            <a href="{% url 'admin:actionlog_logmodel_delete' object_id %}"
+                class="deletelink">{% trans "Удалить" %}</a>
+        </p>
+    {% if object_exists and object_link%}
+        <a href="{{  object_link  }}"
+            class="closelink object-link">
+            {% trans "Перейти к объекту " %}
+        </a>
+    {% endif %}
+        </div>
+        <link rel="stylesheet" href="{% static 'common/css/link-as-button.css' %}">
+        <link rel="stylesheet" href="{% static 'common/css/label-text-color.css' %}">
+    {% endblock %}

@@ -17,7 +17,7 @@ class Category(MPTTModel):
         unique_together = (('name', 'parent_id'), )
 
     name = models.CharField(max_length=80, unique=True,
-                            blank=False, verbose_name=_('Категория'))
+                            blank=False, verbose_name=_('Название'))
     parent = TreeForeignKey('self',
                             on_delete=models.CASCADE,
                             null=True, blank=True,

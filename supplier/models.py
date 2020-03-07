@@ -11,7 +11,7 @@ class Supplier(models.Model):
         verbose_name = _('Поставщик')
         verbose_name_plural = _('Поставщики')
 
-    organization = models.CharField(max_length=80,
+    organization = models.CharField(max_length=80, unique=True,
                                     verbose_name=_('Организация'))
     address = models.TextField(verbose_name=_('Адрес'))
     phone_number = models.CharField(max_length=20, verbose_name=_('Телефон'))

@@ -8,8 +8,8 @@ from django.utils.translation import gettext as _
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin):
     """
-   Отображение списка категорий
-   """
+    Отображение списка категорий
+    """
     tree_auto_open = True
     # mptt_level_indent = 30
     mptt_indent_field = 'name'

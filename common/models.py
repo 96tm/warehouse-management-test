@@ -30,8 +30,6 @@ def format_date(date):
     """
     Форматировать дату, полученную из базы данных,
     в установленный часовой пояс
-    :param date: полученная дата типа date
-    :return: str: строковое представление даты
     """
     return (date
             .astimezone(tz=pytz.timezone(settings.TIME_ZONE))

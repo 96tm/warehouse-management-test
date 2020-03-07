@@ -1,5 +1,3 @@
-import requests
-
 from django.contrib import messages
 from django.forms import formset_factory
 from django.urls import reverse
@@ -14,12 +12,14 @@ from django.views.decorators.cache import never_cache
 from category.models import Category
 from warehouse.models import Stock
 from .models import Shipment
-from .forms import ShipmentConfirmationForm, OrderItemForm
+from .forms import OrderItemForm
 from .forms import OrderCustomerSelectForm
 from customer.forms import CustomerForm
 from common.models import ShipmentStock
 
 from django.http import Http404, JsonResponse
+
+from socket import error as socket_base_error
 
 
 def shipment_success(request):
@@ -28,56 +28,6 @@ def shipment_success(request):
     """
     return render(request, 'shipment/shipment_success.html')
 
-
-# @method_decorator(never_cache, name='dispatch')
-# class OrderView(View):
-#     """
-#     Class-based view для обработки страницы покупки
-#     """
-#     OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
-#
-#     def post(self, request):
-#         customer_form = CustomerForm(request.POST)
-#         item_formset = self.OrderItemFormSet(request.POST)
-#         customer_selectform = OrderCustomerSelectForm(request.POST)
-#
-#         # FIXME: Добавить обработку неправильно введённых форм
-#         customer = None
-#         if request.POST.get('reg'):
-#             if customer_selectform.is_valid():
-#                 customer = customer_selectform.cleaned_data.get('customer')
-#         else:
-#             if customer_form.is_valid():
-#                 customer = customer_form.save()
-#         ###
-#         if not customer:
-#             return self.get(request)
-#         ###
-#         sh = Shipment.objects.create(customer=customer)
-#
-#         if item_formset.is_valid():
-#             stocks = dict()
-#             for form in item_formset:
-#                 name = form.cleaned_data['item']
-#                 stocks[name] = (stocks.get(name, 0)
-#                                 + form.cleaned_data.get('count'))
-#             for stock, count in stocks.items():
-#                 ShipmentStock.objects.create(shipment=sh,
-#                                              stock=stock, number=count)
-#
-#         messages.info(request, _('Заявка отправлена'))
-#         return redirect('shipment:order_successful')
-#
-#     def get(self, request):
-#         customer_form = CustomerForm()
-#         item_formset = self.OrderItemFormSet()
-#         customer_selectform = OrderCustomerSelectForm()
-#         context = {
-#             'customer_form': customer_form,
-#             'item_formset': item_formset,
-#             'customer_selectform': customer_selectform,
-#         }
-#         return render(request, 'shipment/order.html', context)
 
 @method_decorator(never_cache, name='dispatch')
 class OrderView(View):
@@ -91,7 +41,8 @@ class OrderView(View):
         item_formset = self.OrderItemFormSet(request.POST)
         customer_selectform = OrderCustomerSelectForm(request.POST)
 
-        if (customer_selectform.is_valid() or customer_form.is_valid()) and item_formset.is_valid():
+        if ((customer_selectform.is_valid() or customer_form.is_valid())
+           and item_formset.is_valid()):
 
             if request.POST.get('reg'):
                 customer = customer_selectform.cleaned_data.get('customer')
@@ -103,9 +54,11 @@ class OrderView(View):
             stocks = dict()
             for form in item_formset:
                 name = form.cleaned_data['item']
-                stocks[name] = stocks.get(name, 0) + form.cleaned_data.get('count')
+                stocks[name] = (stocks.get(name, 0)
+                                + form.cleaned_data.get('count'))
             for stock, count in stocks.items():
-                ShipmentStock.objects.create(shipment=sh, stock=stock, number=count)
+                ShipmentStock.objects.create(shipment=sh, stock=stock,
+                                             number=count)
 
             messages.info(request, _('Заявка отправлена'))
             return redirect('shipment:order_successful')
@@ -117,7 +70,9 @@ class OrderView(View):
         if self.request.is_ajax():
             cat = request.GET['category']
             if cat:
-                category = Category.objects.get(pk=cat).get_descendants(include_self=True)
+                category = (Category
+                            .objects
+                            .get(pk=cat).get_descendants(include_self=True))
                 stock = Stock.objects.filter(category__in=category)
                 stock_dict = {k: v for k, v in stock.values_list('pk', 'name')}
             return JsonResponse(stock_dict)
@@ -151,8 +106,12 @@ class ShipmentConfirmation(TemplateView):
         if qr and Shipment.objects.filter(qr=qr).exists():
             shipment = Shipment.objects.get(qr=qr)
             if shipment.status == Shipment.SENT:
-                messages.info(request, _('Покупка подтверждена, спасибо!'))
-                self.send_email_to_admin(request, shipment)
+                try:
+                    self.send_email_to_admin(request, shipment)
+                    messages.info(request, _('Покупка подтверждена, спасибо!'))
+                except socket_base_error:
+                    messages.error(request,
+                                   _('Не удалось подключиться к сети'))
                 return render(request, template_name=self.template_name)
         raise Http404(_('Покупка не найдена'))
 
