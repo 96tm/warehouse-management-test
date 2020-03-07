@@ -1,0 +1,18 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+{% load static %}
+    {% block submit_buttons_bottom %}
+    <div class="submit-row list-group">
+        <p class="deletelink-box">
+            <a href="{% url 'admin:cargo_cargo_delete' object_id %}"
+            class="deletelink">{% trans "Удалить" %}</a>
+        </p>
+        {% if STATUS_VALUE == STATUS_IN_TRANSIT%}
+            <input type="submit" title="{% trans "Подтвердить получение поставки" %}"
+                class="default list-group-item active"
+                name="_confirm" value="{% trans "Подтвердить получение поставки" %}"
+                {{ onclick_attrib }}>
+        {% endif %}
+    </div>
+    <link rel="stylesheet" href="{% static 'common/css/label-text-color.css' %}">
+    {% endblock %}

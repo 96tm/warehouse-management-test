@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="shortcut icon" type="image/png" href="{% static 'common/img/favicon.png' %}"/>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/base.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}">
+    <title>{% block title %} {% endblock %} </title>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+    <div id="header">
+        <div id="branding">
+            <h1 id="site-name">
+                {% block header-name %}
+                    {% trans "Склад" %}
+                {% endblock %}
+            </h1>
+        </div>
+        <div id="user-tools">
+            <a href="{% url 'mainpage:index' %}">{% trans "Главная страница" %}</a>
+            /
+            <a href="{% url 'cargo:cargo_new' %}">{% trans "Отправить поставку" %}</a>
+            /
+            <a href="{% url 'shipment:order' %}">{% trans "Сделать покупку" %}</a>
+            /
+            <a href="{% url 'admin:index' %}">{% trans "Управление складом" %}</a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                    <li class="error">{{ message }}</li>
+                {% else %}
+                    <li class="success">{{ message }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+</body>
+</html>

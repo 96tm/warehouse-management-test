@@ -1,0 +1,55 @@
+{% extends 'mainpage/base.html' %}
+{% load static %}
+{% load i18n %}
+
+    {% block title %}
+        {% trans "Покупка" %}
+    {% endblock %}
+    {% block header-name %}
+        {% trans "Покупка" %}
+    {% endblock %}
+
+{% block content %}
+<div class="colM">
+    <form method="POST">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <h2>{% trans "Информация о покупателе" %}</h2>
+            <div class="form-row">
+                <label for="id_reg">
+                    Уже зарегистрированы?
+                </label>
+                <input type="checkbox" id="id_reg" name="reg" >
+            </div>
+            <div class="form-row" id="sel_cus" style="display: none">
+                {{ customer_selectform }}
+            </div>
+            <div class="form-row" id="reg_cus">
+                {{ customer_form.as_p }}
+            </div>
+        </fieldset>
+
+        {{ item_formset.management_form }}
+
+        <fieldset class="module aligned">
+            <h2> {% trans "Выберите товары" %}</h2>
+            {% for form in item_formset %}
+                <div class="form-row order-formset">
+                    {{ form.category }}
+                    {{ form.item }}
+                    {{ form.count }}
+                </div>
+            {% endfor %}
+        </fieldset>
+         <div class="submit-row">
+            <p class="deletelink-box">
+                <input type="submit" class="default" value="{% trans 'Отправить заявку на покупку' %}">
+            </p>
+         </div>
+    </form>
+</div>
+
+<script src="{% static 'common/js/jquery-3.4.1.min.js' %}"></script>
+<script src="{% static 'common/js/jquery.formset.js' %}"></script>
+<script src="{% static 'common/js/order-formset.js' %}"></script>
+{% endblock %}
