@@ -1,9 +1,51 @@
 {% extends 'mainpage/base.html' %}
 {% load i18n %}
+{% load static %}
 {% load admin_urls %}
-    {% block title %}
-        {% trans "Склад" %}
-    {% endblock %}
-    {% block head %}
 
+    {% block title %}
+        {% trans "Проект системы складского учёта" %}
+    {% endblock %}
+
+    {% block header-name %}
+        {% trans "Проект системы складского учёта" %}
+    {% endblock %}
+
+    {% block head %}
+    {% endblock %}
+
+    {% block content %}
+        <div id="content" class="flex">
+            <h2>{% trans "Проект системы складского учёта с выдачей товара по QR коду" %}</h3>
+                <div>
+                    {% trans "Кейс - хранение товаров на складе до момента реализации," %}
+                    <br>
+                    {% trans "учет товаров по цене и количеству, обработка заявок на поставку и отгрузку." %}
+                </div>
+            <br>
+            <p class="ul-header">{% trans "Упрощённый процесс работы системы:" %}</p>
+            <img src="{% static 'common/img/workflow.png' %}">
+            <div class="list-container">
+                <ul><p class="ul-header">{% trans "Возможности:" %}</p>
+                    <li><a href="{% url 'admin:index' %}">{% trans "регистрация и учет товаров на складе" %}</a></li>
+                    <li><a href="{% url 'cargo:cargo_new' %}">{% trans "приём поставок" %}</a></li>
+                    <li><a href="{% url 'shipment:order' %}">{% trans "оформление покупок" %}</a></li>
+                </ul>
+            </div>
+            
+            <div class="list-container">
+                <ul><p class="ul-header">{% trans "Проект разделён на следующие модули: " %}</p>
+                    <li>{% trans "главная страница" %}</li>
+                    <li>{% trans "поставщики" %}</li>
+                    <li>{% trans "покупатели" %}</li>
+                    <li>{% trans "поставки" %}</li>
+                    <li>{% trans "отгрузки" %}</li>
+                    <li>{% trans "номенклатура товаров (склад)" %}</li>
+                    <li>{% trans "операции склада" %}</li>
+                    <li>{% trans "категории товаров" %}</li>
+                </ul>
+            </div>
+        </div>
+        <link rel="stylesheet" href="{% static 'common/css/main-page.css' %}">
+        <p class="attribution">Icons made by <a href="https://www.flaticon.com/authors/ultimatearm" title="ultimatearm">ultimatearm</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></p>
     {% endblock %}

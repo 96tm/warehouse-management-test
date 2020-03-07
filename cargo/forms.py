@@ -2,10 +2,7 @@ from django import forms
 
 from django.utils.translation import gettext as _
 
-from .models import Cargo
-from warehouse.models import Stock
-from common.models import CargoStock
-from .models import get_cargo_total
+from .models import Cargo, get_cargo_total
 from common.models import format_date
 
 
@@ -17,35 +14,6 @@ class CargoNewForm(forms.ModelForm):
     class Meta:
         model = Cargo
         fields = ('supplier', )
-
-
-class CargoFillForm(forms.ModelForm):
-    """
-    Форма заполнения информации о товаре
-    при оформлении поставки
-    """
-    class Meta:
-        model = Cargo
-        fields = []
-
-    cargo_supplier = forms.CharField(label=_('Поставщик'))
-    cargo_supplier.widget = forms.TextInput(attrs={'readonly': 'readonly'})
-    number = forms.IntegerField(label=_('Количество позиций'), initial=1,
-                                min_value=1)
-    stock_name = forms.ChoiceField(label=_("Наименование товара"),
-                                   required=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        choices = [(s.name, s.name) for s in Stock.objects.all()]
-        self.fields['stock_name'].choices = choices
-
-    def save(self, commit=True):
-        stock = Stock.objects.get(name=self.cleaned_data['stock_name'])
-        CargoStock.objects.create(cargo=self.instance,
-                                  stock=stock,
-                                  number=self.cleaned_data['number'])
-        super().save(commit)
 
 
 class CargoForm(forms.ModelForm):

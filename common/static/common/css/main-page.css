@@ -1,0 +1,12 @@
+ul{
+    padding-left: 0;
+    list-style-position: inside;
+}
+
+.ul-header{
+    font-weight: bold;
+}
+
+.attribution{
+    visibility: hidden;
+}

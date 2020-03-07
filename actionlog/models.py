@@ -5,10 +5,10 @@ from django.utils.translation import gettext as _
 # Create your models here.
 
 
-class ModelChangeLogsModel(models.Model):
+class LogModel(models.Model):
     class Meta:
-        verbose_name = _('Операция')
-        verbose_name_plural = _('История операций')
+        verbose_name = _('Действие')
+        verbose_name_plural = _('История действий')
     table_name = models.CharField(max_length=132, null=False, blank=True,
                                   verbose_name=_('Тип объекта'))
     data = models.TextField(null=False, blank=True,
@@ -17,6 +17,8 @@ class ModelChangeLogsModel(models.Model):
                               verbose_name=_('Действие'))
     date = models.DateTimeField(auto_now_add=True,
                                 verbose_name='Дата')
+    object_entry_id = models.IntegerField(null=False,
+                                          verbose_name=_('ID объекта'))
 
     def __str__(self):
-        return _('операция - ') + self.action
+        return _('действие - ') + self.action

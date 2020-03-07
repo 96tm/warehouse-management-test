@@ -13,7 +13,6 @@ class CargoAdmin(admin.ModelAdmin):
     """
     Отображение списка и формы поставок
     """
-
     class StockInline(admin.StackedInline):
         model = CargoStock
         form = StockFormM2M
@@ -42,9 +41,10 @@ class CargoAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id,
                     form_url='', extra_context=None):
         extra = extra_context or {}
-        extra['STATUS_VALUE'] = Cargo.objects.get(pk=object_id).status
-        extra['STATUS_IN_TRANSIT'] = Cargo.IN_TRANSIT
-        extra['STATUS_DONE'] = Cargo.DONE
+        if Cargo.objects.filter(pk=object_id).exists():
+            extra['STATUS_VALUE'] = Cargo.objects.get(pk=object_id).status
+            extra['STATUS_IN_TRANSIT'] = Cargo.IN_TRANSIT
+            extra['STATUS_DONE'] = Cargo.DONE
         return super().change_view(request, object_id,
                                    form_url,
                                    extra_context=extra)
@@ -57,4 +57,3 @@ class CargoAdmin(admin.ModelAdmin):
                 cs.stock.save()
             obj.status = Cargo.DONE
         super().save_model(request, obj, form, change)
-

@@ -8,10 +8,6 @@ from .filters import StockCategoryFilter, StockEmptyFilter
 from .filters import StockPriceFilter
 
 
-# функция gettext с псевдонимом _ применяется к строками
-# для последующего перевода
-
-
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
     """

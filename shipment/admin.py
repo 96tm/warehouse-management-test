@@ -11,12 +11,13 @@ from django.utils.translation import gettext as _
 
 from .forms import ShipmentForm
 
-
 from common.models import ShipmentStock
 from warehouse.forms import StockFormM2M
 
 from .models import get_shipment_total
 from .models import Shipment
+
+from socket import error as socket_base_error
 
 
 @admin.register(Shipment)
@@ -53,7 +54,6 @@ class ShipmentAdmin(admin.ModelAdmin):
         return all(s.stock.number > s.number
                    for s in ShipmentStock.objects.filter(shipment=obj))
 
-    # убираем кнопку "Добавить погрузку" при отображении списка погрузок
     def has_add_permission(self, request):
         return False
 
@@ -71,18 +71,22 @@ class ShipmentAdmin(admin.ModelAdmin):
         elif obj.status == Shipment.CREATED:
             # проверка данных клиента на сервере
             if shipment_available:
-                obj.status = Shipment.SENT
-                # обновляем склад
-                for shipment_stock in obj.shipmentstock_set.all():
-                    shipment_stock.stock.number -= shipment_stock.number
-                    shipment_stock.stock.save()
-                obj.qr = str(obj.id) + str(uuid.uuid4())
+                qr = str(obj.id) + str(uuid.uuid4())
                 email = obj.customer.email
-                link = self.get_confirmation_link(request.get_host(), obj.qr)
+                link = self.get_confirmation_link(request.get_host(), qr)
                 body = _('Здравствуйте, подтвердите '
                          + 'получение покупки: перейдите по ссылке ')
                 body += _('из QR-кода во вложении (') + link + ').'
-                self.send_email_to_customer(email, body, obj, link)
+                try:
+                    self.send_email_to_customer(email, body, obj, link)
+                    obj.status = Shipment.SENT
+                    for shipment_stock in obj.shipmentstock_set.all():
+                        shipment_stock.stock.number -= shipment_stock.number
+                        shipment_stock.stock.save()
+                    obj.qr = qr
+                except socket_base_error:
+                    messages.error(request,
+                                   _('Не удалось подключиться к сети'))
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super().save_model(request, obj, form, change)
@@ -97,13 +101,14 @@ class ShipmentAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id,
                     form_url='', extra_context=None):
         extra = extra_context or {}
-        obj = Shipment.objects.get(pk=object_id)
-        extra['STATUS_VALUE'] = Shipment.objects.get(pk=object_id).status
-        extra['STATUS_DONE'] = Shipment.DONE
-        extra['STATUS_CANCELLED'] = Shipment.CANCELLED
-        extra['STATUS_CREATED'] = Shipment.CREATED
-        extra['STATUS_SENT'] = Shipment.SENT
-        extra['SHIPMENT_AVAILABLE'] = self.is_shipment_available(obj)
+        if Shipment.objects.filter(pk=object_id).exists():
+            obj = Shipment.objects.get(pk=object_id)
+            extra['STATUS_VALUE'] = Shipment.objects.get(pk=object_id).status
+            extra['STATUS_DONE'] = Shipment.DONE
+            extra['STATUS_CANCELLED'] = Shipment.CANCELLED
+            extra['STATUS_CREATED'] = Shipment.CREATED
+            extra['STATUS_SENT'] = Shipment.SENT
+            extra['SHIPMENT_AVAILABLE'] = self.is_shipment_available(obj)
         return super().change_view(request, object_id,
                                    form_url, extra_context=extra)
 

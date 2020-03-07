@@ -37,10 +37,3 @@ class SupplierAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         obj.categories.set(form.cleaned_data['supplier_categories'])
-
-    # не отображаем список записей suppliercategory
-    # при подтверждении удаления
-    def get_deleted_objects(self, objs, request):
-        for obj in objs:
-            obj.suppliercategory_set.set([])
-        return super().get_deleted_objects(objs, request)

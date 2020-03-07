@@ -82,4 +82,3 @@ class OrderItemForm(forms.Form):
     item = forms.ModelChoiceField(queryset=Stock.objects.all())
     item.widget = forms.Select(attrs={'required': True})
     count = forms.DecimalField(required=True, initial=1, min_value=1)
-

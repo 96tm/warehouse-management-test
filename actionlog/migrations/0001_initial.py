@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='ModelChangeLogsModel',
+            name='LogModel',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('table_name', models.CharField(blank=True, max_length=132, verbose_name='Тип объекта')),
