@@ -31,9 +31,9 @@ python manage.py migrate
 python manage.py createsuperuser
 
 - заполнить базу данных тестовыми значениями <br>
-python manage.py shell
-from common.fill_db import fill_db
-fill_db()
+python manage.py shell <br>
+from common.fill_db import fill_db <br>
+fill_db() <br>
 exit()
 
 - изменить email в файле warehouse-management-test/settings.py <br>
