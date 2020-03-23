@@ -24,17 +24,17 @@
 - клонировать в нужную директорию <br>
 git clone https://github.com/96tm/warehouse-management-test.git
 
-- создать виртуальное окружение
-python3.8 -m venv environment <br>
+- создать виртуальное окружение <br>
+python3.8 -m venv environment
 
-- активировать окружение
-source environment/bin/activate <br>
+- активировать окружение <br>
+source environment/bin/activate
 
-- установить pipenv
-pip3 install pipenv <br>
+- установить pipenv <br>
+pip3 install pipenv
 
-- установить зависимости
-pipenv install <br>
+- установить зависимости <br>
+pipenv install
 
 - выполнить миграции <br>
 python manage.py migrate
