@@ -11,7 +11,7 @@
     Структура приложения
   </summary>
 
-```sh
+```
 ├── manage.py
 ├── Readme.md
 ├── Pipfile
