@@ -1,7 +1,13 @@
-Тестовое CRUD-приложение системы складского учёта на Django с базой данных SQLite3.
+[![License](https://img.shields.io/badge/license-MIT-green)](https://tldrlegal.com/license/mit-license) <br>
+
+<hr>
+
+Тестовое CRUD-приложение системы складского учёта на Django 3.0.3 с базой данных SQLite3.
 Использованы внешние библиотеки mptt, jquery formsets, qrcode.
 
-Что можно сделать:
+<hr>
+
+### Что можно сделать:
 - создать поставку на странице /cargo_new
 ![Страница поставки](1.png)
 
@@ -20,37 +26,50 @@
 ![Страница товаров](5.png)
 ![Страница категорий](6.png)
 
-Как запустить:
-- клонировать в нужную директорию <br>
-git clone https://github.com/96tm/warehouse-management-test.git
+<hr>
 
-- создать виртуальное окружение <br>
-python3.8 -m venv environment
+### Как запустить:
 
-- активировать окружение <br>
-source environment/bin/activate
-
+- клонировать в нужную директорию
+```
+$ git clone https://github.com/96tm/warehouse-management-test.git
+```
+- создать виртуальное окружение
+```
+$ python3.8 -m venv environment
+```
+- активировать окружение
+```
+$ source environment/bin/activate
+```
 - установить pipenv <br>
-pip3 install pipenv
-
+```
+$ pip3 install pipenv
+```
 - установить зависимости <br>
-pipenv install
-
-- выполнить миграции <br>
-python manage.py migrate
-
-- создать пользователя с правами администратора <br>
-python manage.py createsuperuser
-
-- заполнить базу данных тестовыми значениями <br>
-python manage.py shell <br>
-from common.fill_db import fill_db <br>
-fill_db() <br>
-exit()
-
+```
+$ pipenv install
+```
+- выполнить миграции
+```
+$ python manage.py migrate
+```
+- создать пользователя с правами администратора
+```
+$ python manage.py createsuperuser
+```
+- заполнить базу данных тестовыми значениями
+```
+$ python manage.py shell
+>>> from common.fill_db import fill_db
+>>> fill_db()
+>>> exit()
+```
 - изменить email в файле warehouse-management-test/settings.py <br>
 (EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, <br>
 DEFAULT_FROM_EMAIL, SERVER_EMAIL, ADMINS)
 
-- запустить сервер <br>
-python manage.py runserver
+- запустить сервер
+```
+$ python manage.py runserver
+```
