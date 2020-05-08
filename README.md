@@ -5,9 +5,156 @@
 Тестовое CRUD-приложение системы складского учёта на Django 3.0.3 с базой данных SQLite3.
 Использованы внешние библиотеки mptt, jquery formsets, qrcode.
 
-<hr>
+<details>
+  
+  <summary> 
+    Структура приложения
+  </summary>
 
-### Что можно сделать:
+```sh
+├── manage.py
+├── Readme.md
+├── Pipfile
+├── actionlog
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   ├── signals.py
+|   └── tests.py
+├── cargo
+|   ├── migrations
+|   |   └── ...
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   ├── signals.py
+|   ├── tests.py
+|   └── templates
+|       └── cargo
+|           └── cargo_formsets.html
+├── category
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── models.py
+|   └── tests.py
+├── common
+|   ├── migrations
+|   |   └── ...
+|   ├── static
+|   |   └── common
+|   |       ├── css
+|   |       |   ├── label-text-color.css
+|   |       |   ├── link-as-button.css
+|   |       |   └── main-page.css
+|   |       ├── img
+|   |       |   ├── favicon.png
+|   |       |   └── workflow.png
+|   |       └── js
+|   |           ├── jquery-3.4.1.min.js
+|   |           ├── jquery.formset.js
+|   |           ├── order-formset.js
+|   |           ├── stock-formset-cargo.js
+|   |           └── stock-formset.js
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   ├── signals.py
+|   └── tests.py
+├── customer
+|   ├── migrations
+|   |   └── ...
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   └── tests.py
+├── mainpage
+|   ├── templates
+|   |   └── mainpage
+|   |       ├── base.html
+|   |       └── index.html
+|   ├── __init__.py
+|   ├── apps.py
+|   ├── urls.py
+|   ├── views.py
+|   └── tests.py
+├── shipment
+|   ├── migrations
+|       └── ...
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   ├── urls.py
+|   ├── tests.py
+|   ├── views.py
+|   └── templates
+|       └── shipment
+|           ├── order.html
+|           ├── order_successful.html
+|           └── shipment_confirmation.html
+├── supplier
+|   ├── migrations
+|       └── ...
+|   ├── __init__.py
+|   ├── admin.py
+|   ├── apps.py
+|   ├── forms.py
+|   ├── models.py
+|   └──  tests.py
+├── templates
+|   └── admin
+|       ├── actionlog
+|       |   └── change_form.html
+|       ├── cargo
+|       |   └── cargo
+|       |       └── change_form.html
+|       ├── category
+|       |   └── change_form.html
+|       ├── customer
+|       |   └── change_form.html
+|       ├── shipment
+|       |   └── shipment
+|       |       └── change_form.html
+|       └── warehouse
+|           └── stock
+|               ├── stock-price-filter.html
+|               └── stock-total-value.html
+├── warehouse-management-test
+|   ├── __init__.py
+|   ├── asgi.py
+|   ├── settings.py
+|   ├── urls.py
+|   └── wsgi.py
+└── warehouse
+    ├── migrations
+    |   └── ...
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── forms.py
+    ├── models.py
+    ├── filters.py
+    └── tests.py
+```
+
+</details>
+
+<details>
+  
+  <summary>
+    Что можно сделать
+  </summary>
+
 - создать поставку на странице /cargo_new
 ![Страница поставки](1.png)
 
@@ -26,9 +173,15 @@
 ![Страница товаров](5.png)
 ![Страница категорий](6.png)
 
+</details>
+
 <hr>
 
-### Как запустить:
+<details>
+  
+  <summary>
+   Как запустить
+  </summary>
 
 - клонировать в нужную директорию
 ```
@@ -51,16 +204,22 @@ $ pip3 install pipenv
 $ pipenv install
 ```
 - выполнить миграции
-```
+```sh
 $ python manage.py migrate
 ```
 - создать пользователя с правами администратора
-```
+
+```sh
 $ python manage.py createsuperuser
 ```
+
 - заполнить базу данных тестовыми значениями
-```
+
+```sh
 $ python manage.py shell
+```
+
+```python
 >>> from common.fill_db import fill_db
 >>> fill_db()
 >>> exit()
@@ -70,6 +229,9 @@ $ python manage.py shell
 DEFAULT_FROM_EMAIL, SERVER_EMAIL, ADMINS)
 
 - запустить сервер
-```
+
+```sh
 $ python manage.py runserver
 ```
+
+</details>
