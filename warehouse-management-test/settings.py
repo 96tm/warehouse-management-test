@@ -25,21 +25,21 @@ SECRET_KEY = 'kse**o7%+w4)v*jg7+0i3w7!_8pdcmo2fc2d@p=_kw1z)7@+c5'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'lh5yv7.pythonanywhere.com', ]
+ALLOWED_HOSTS = ['127.0.0.1', ]
 
-EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_HOST = ENTER_YOUR_DATA
 
-EMAIL_HOST_USER = 'den_se_in@mail.ru'
+EMAIL_HOST_USER = ENTER_YOUR_DATA
 
-EMAIL_HOST_PASSWORD = '/9WGF\\v;]}'
+EMAIL_HOST_PASSWORD = ENTER_YOUR_DATA
 
 EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = 'den_se_in@mail.ru'
+DEFAULT_FROM_EMAIL = ENTER_YOUR_DATA
 
-SERVER_EMAIL = 'den_se_in@mail.ru'
+SERVER_EMAIL = ENTER_YOUR_DATA
 
-ADMINS = [('Admin', 'den_se_in@mail.ru')]
+ADMINS = [('Admin', ENTER_YOUR_DATA)]
 
 # Application definition
 
