@@ -31,7 +31,6 @@ HOSTNAME = os.environ.get('DJANGO_HOSTNAME', 'localhost')
 PORT = os.environ.get('DJANGO_PORT', '8888')
 DJANGO_HOSTNAME = 'http://' + HOSTNAME + ':' + PORT
 
-
 ALLOWED_HOSTS = ['*']
 
 EMAIL_HOST = os.environ.get('EMAIL_HOST')
