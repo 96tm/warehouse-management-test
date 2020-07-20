@@ -14,7 +14,7 @@ from customer.models import Customer
 
 class ShipmentForm(forms.ModelForm):
     """
-    Форма покупки для интерфейса кладовщика
+    Форма покупки для интерфейса кладовщика.
     """
     class Meta:
         model = Shipment
@@ -34,7 +34,6 @@ class ShipmentForm(forms.ModelForm):
                    'shipment_id', 'shipment_date',
                    'shipment_status', 'shipment_qr', )
 
-    # добавляем инициализацию дополнительных полей при создании формы
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
@@ -58,14 +57,14 @@ class ShipmentForm(forms.ModelForm):
 
 class ShipmentConfirmationForm(forms.Form):
     """
-    Форма с полем ввода ключа для подтверждения получения покупки
+    Форма с полем ввода ключа для подтверждения получения покупки.
     """
     shipment_key = forms.CharField(required=True)
 
 
 class OrderCustomerSelectForm(forms.Form):
     """
-    Форма для выбора покупателя на странице покупки
+    Форма для выбора покупателя на странице покупки.
     """
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(),
                                       label=_('Покупатель'))
@@ -74,7 +73,7 @@ class OrderCustomerSelectForm(forms.Form):
 
 class OrderItemForm(forms.Form):
     """
-    Форма для выбора товара на странице покупки
+    Форма для выбора товара на странице покупки.
     """
     category = TreeNodeChoiceField(queryset=Category.objects.all(),
                                    level_indicator=u'+--', required=False)

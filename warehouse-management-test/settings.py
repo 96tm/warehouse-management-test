@@ -11,35 +11,44 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kse**o7%+w4)v*jg7+0i3w7!_8pdcmo2fc2d@p=_kw1z)7@+c5'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'secret')
+EMAIL_PORT = os.environ.get('EMAIL_PORT', 587)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', False)
 
-ALLOWED_HOSTS = ['127.0.0.1', 'lh5yv7.pythonanywhere.com', ]
+HOSTNAME = os.environ.get('DJANGO_HOSTNAME', 'localhost')
+PORT = os.environ.get('DJANGO_PORT', '8888')
+DJANGO_HOSTNAME = 'http://' + HOSTNAME + ':' + PORT
 
-EMAIL_HOST = ENTER_YOUR_DATA
 
-EMAIL_HOST_USER = ENTER_YOUR_DATA
+ALLOWED_HOSTS = ['*']
 
-EMAIL_HOST_PASSWORD = ENTER_YOUR_DATA
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = ENTER_YOUR_DATA
+CLIENT_EMAIL = os.environ.get('CLIENT_EMAIL')
 
-SERVER_EMAIL = ENTER_YOUR_DATA
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
-ADMINS = [('Admin', ENTER_YOUR_DATA)]
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL')
+
+ADMINS = [('Admin', os.environ.get('ADMIN_EMAIL'))]
 
 # Application definition
 
@@ -99,7 +108,7 @@ WSGI_APPLICATION = 'warehouse-management-test.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'warehouse.db'),
+        'NAME': os.path.join(BASE_DIR, 'database', 'warehouse.db'),
     }
 }
 
@@ -128,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'Asia/Vladivostok'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'Europe/Moscow')
 
 USE_I18N = True
 
@@ -142,3 +151,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATICFILES_DIR = os.path.join(BASE_DIR, 'static')

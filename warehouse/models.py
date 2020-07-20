@@ -9,7 +9,7 @@ from mptt.models import TreeForeignKey
 
 class Stock(models.Model):
     """
-    Таблица товаров (склад)
+    Таблица товаров (склад).
     """
     class Meta:
         verbose_name = _('Товар')

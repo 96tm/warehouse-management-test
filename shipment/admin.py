@@ -4,9 +4,11 @@ import uuid
 
 from django.urls import reverse
 from django.contrib import admin, messages
-from django.core.mail import EmailMessage
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from email.mime.base import MIMEBase
 from email.encoders import encode_base64
+from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from .forms import ShipmentForm
@@ -23,7 +25,7 @@ from socket import error as socket_base_error
 @admin.register(Shipment)
 class ShipmentAdmin(admin.ModelAdmin):
     """
-    Отображение списка и формы заказов
+    Отображение списка и формы заказов.
     """
     class StockInline(admin.StackedInline):
         model = ShipmentStock
@@ -73,12 +75,14 @@ class ShipmentAdmin(admin.ModelAdmin):
             if shipment_available:
                 qr = str(obj.id) + str(uuid.uuid4())
                 email = obj.customer.email
-                link = self.get_confirmation_link(request.get_host(), qr)
-                body = _('Здравствуйте, подтвердите '
-                         + 'получение покупки: перейдите по ссылке ')
-                body += _('из QR-кода во вложении (') + link + ').'
+                link = self.get_confirmation_link(settings.DJANGO_HOSTNAME,
+                                                  qr)
+                template_html = 'shipment/email_to_customer.html'
+                template_txt = 'shipment/email_to_customer.txt'
+                body = render_to_string(template_html, {'link': link})
+                body_txt = render_to_string(template_txt, {'link': link})
                 try:
-                    self.send_email_to_customer(email, body, obj, link)
+                    self.send_email_to_customer(email, body, body_txt, link)
                     obj.status = Shipment.SENT
                     for shipment_stock in obj.shipmentstock_set.all():
                         shipment_stock.stock.number -= shipment_stock.number
@@ -90,7 +94,6 @@ class ShipmentAdmin(admin.ModelAdmin):
         elif obj.status == Shipment.SENT:
             obj.status = Shipment.DONE
         super().save_model(request, obj, form, change)
-        # печатаем сообщение об ошибке
         if not shipment_available:
             messages.set_level(request, messages.ERROR)
             messages.error(request, _('На складе недостаточно '
@@ -123,14 +126,16 @@ class ShipmentAdmin(admin.ModelAdmin):
         return str(host) + reverse('shipment:shipment_confirmation',
                                    args=(qr, ))
 
-    def send_email_to_customer(self, receiver, body, customer, link):
+    def send_email_to_customer(self, receiver, body, body_txt, link):
         qr = self.get_qr(link)
         attachment = MIMEBase('application', 'octet-stream')
         attachment.set_payload(qr)
         encode_base64(attachment)
         attachment.add_header('Content-Disposition',
                               'attachment; filename=qr.png')
-        message = EmailMessage(subject=_('Подтверждение получения товара'),
-                               body=body, to=[receiver, ],
-                               attachments=[attachment, ])
+        subject = _('Подтверждение получения товара')
+        message = EmailMultiAlternatives(subject=subject,
+                                         body=body_txt, to=[receiver, ],
+                                         attachments=[attachment, ])
+        message.attach_alternative(body, "text/html")
         message.send()

@@ -12,7 +12,7 @@ def get_shipment_total(obj):
 
 class Shipment(models.Model):
     """
-    Таблица покупок
+    Таблица покупок.
     """
     class Meta:
         verbose_name = _('Покупка')

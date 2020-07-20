@@ -9,7 +9,7 @@ from common.models import format_date
 class CargoNewForm(forms.ModelForm):
     """
     Форма для выбора поставщика
-    при оформлении поставки
+    при оформлении поставки.
     """
     class Meta:
         model = Cargo
@@ -18,7 +18,7 @@ class CargoNewForm(forms.ModelForm):
 
 class CargoForm(forms.ModelForm):
     """
-    Форма поставки для интерфейса кладовщика
+    Форма поставки для интерфейса кладовщика.
     """
     class Meta:
         model = Cargo

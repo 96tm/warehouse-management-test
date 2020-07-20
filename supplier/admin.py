@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
     """
-    Отображение списка и формы поставщиков
+    Отображение списка и формы поставщиков.
     """
     class CargoInline(admin.StackedInline):
         model = Cargo

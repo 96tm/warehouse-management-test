@@ -12,7 +12,7 @@ from common.models import subtotal_value
 
 class StockPriceFilter(ListFilter):
     """
-    Фильтр товаров по цене
+    Фильтр товаров по цене.
     """
     template = 'admin/warehouse/stock/stock-price-filter.html'
     title = _('По цене')
@@ -68,7 +68,7 @@ class StockPriceFilter(ListFilter):
 
 class StockCategoryFilter(TreeRelatedFieldListFilter):
     """
-    Фильтр товаров по категории
+    Фильтр товаров по категории.
     """
     template = 'admin/warehouse/stock/stock-total-value.html'
     mptt_level_indent = 20
@@ -120,7 +120,7 @@ class StockCategoryFilter(TreeRelatedFieldListFilter):
 
 class StockEmptyFilter(SimpleListFilter):
     """
-    Фильтр товаров по наличию/отсутствию
+    Фильтр товаров по наличию/отсутствию.
     """
     title = _('По наличию')
     parameter_name = 'number'

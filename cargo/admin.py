@@ -11,7 +11,7 @@ from common.models import CargoStock
 @admin.register(Cargo)
 class CargoAdmin(admin.ModelAdmin):
     """
-    Отображение списка и формы поставок
+    Отображение списка и формы поставок.
     """
     class StockInline(admin.StackedInline):
         model = CargoStock

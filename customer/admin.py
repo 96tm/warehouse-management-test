@@ -11,7 +11,7 @@ from .forms import CustomerForm
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     """
-    Отображение списка и формы покупателей
+    Отображение списка и формы покупателей.
     """
 
     # объект для отображения заказов выбранного покупателя

@@ -3,8 +3,9 @@ from django.forms import formset_factory
 from django.urls import reverse
 from django.conf import settings
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.views.generic import View, TemplateView
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -24,7 +25,7 @@ from socket import error as socket_base_error
 
 def shipment_success(request):
     """
-    View для обработки перенаправления после оформления поставки
+    View для обработки перенаправления после оформления поставки.
     """
     return render(request, 'shipment/shipment_success.html')
 
@@ -32,7 +33,7 @@ def shipment_success(request):
 @method_decorator(never_cache, name='dispatch')
 class OrderView(View):
     """
-    Class-based view для обработки страницы покупки
+    Class-based view для обработки страницы покупки.
     """
     OrderItemFormSet = formset_factory(OrderItemForm, min_num=1, extra=0)
 
@@ -74,7 +75,8 @@ class OrderView(View):
                             .objects
                             .get(pk=cat).get_descendants(include_self=True))
                 stock = Stock.objects.filter(category__in=category)
-                stock_dict = {k: v for k, v in stock.values_list('pk', 'name')}
+                stock_dict = {k: v for k, v in stock.values_list('pk', 
+                                                                 'name')}
             return JsonResponse(stock_dict)
         customer_form = CustomerForm()
         item_formset = self.OrderItemFormSet()
@@ -89,7 +91,7 @@ class OrderView(View):
 
 class OrderSuccessfulView(View):
     """
-    Class-based view для обработки перенаправления после покупки
+    Class-based view для обработки перенаправления после покупки.
     """
 
     def get(self, request):
@@ -98,7 +100,7 @@ class OrderSuccessfulView(View):
 
 class ShipmentConfirmation(TemplateView):
     """
-    View для подтверждения получения покупки
+    View для подтверждения получения покупки.
     """
     template_name = 'shipment/shipment_confirmation.html'
 
@@ -107,21 +109,25 @@ class ShipmentConfirmation(TemplateView):
             shipment = Shipment.objects.get(qr=qr)
             if shipment.status == Shipment.SENT:
                 try:
-                    self.send_email_to_admin(request, shipment)
-                    messages.info(request, _('Покупка подтверждена, спасибо!'))
+                    self.send_email_to_admin(shipment)
+                    messages.info(request, 
+                                  _('Покупка подтверждена, спасибо!'))
                 except socket_base_error:
                     messages.error(request,
                                    _('Не удалось подключиться к сети'))
                 return render(request, template_name=self.template_name)
         raise Http404(_('Покупка не найдена'))
 
-    def send_email_to_admin(self, request, shipment):
-        body = _('Погрузка доставлена,'
-                 + ' вы можете изменить ее статус по ссылке: ')
-        body += (request.get_host()
+    def send_email_to_admin(self, shipment):
+        link = (settings.DJANGO_HOSTNAME
                  + reverse('admin:shipment_shipment_change',
                            args=(shipment.id,)))
-        message = EmailMessage(subject=_('Погрузка доставлена'),
-                               body=body,
-                               to=[settings.ADMINS[0][1], ])
+        body = render_to_string('shipment/email_to_admin.txt', {'link': link})
+        message = EmailMultiAlternatives(subject=_('Погрузка доставлена'),
+                                         body=body,
+                                         to=[settings.ADMINS[0][1], ])
+        template_html = 'shipment/email_to_admin.html'
+        message.attach_alternative(render_to_string(template_html,
+                                                    {'link': link}), 
+                                   "text/html")
         message.send()

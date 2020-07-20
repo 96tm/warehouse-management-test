@@ -2,149 +2,51 @@
 
 <hr>
 
-Тестовое CRUD-приложение системы складского учёта на Django 3.0.7 с базой данных SQLite3.
+Тестовое CRUD-приложение системы складского учёта на Django 3.0.8 с базой данных SQLite3.
 Использованы внешние библиотеки mptt, jquery formsets, qrcode.
 
 <details>
   
-  <summary> 
-    Структура приложения
+  <summary>
+   Как запустить
   </summary>
 
+<br>
+Один из вариантов - использовать дистрибутив Linux и установленный Docker(протестировано на Ubuntu 20.04 LTS с установленным docker.io 19.03.8). 
+Будут скачаны Docker образы Nginx и Alpine с python3.8, затем создан образ контейнера приложения Django и два volume - директории для базы данных и статических файлов. Доступ к сайту будет осуществляться через контейнер Nginx (порт 8888).
+Для установки нужно выполнить следующие команды в терминале: <br>
+
+- клонировать репозиторий в нужную директорию
+```sh
+$ git clone https://github.com/96tm/warehouse-management-test.git
 ```
-├── manage.py
-├── Readme.md
-├── Pipfile
-├── actionlog
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   ├── signals.py
-|   └── tests.py
-├── cargo
-|   ├── migrations
-|   |   └── ...
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   ├── signals.py
-|   ├── tests.py
-|   └── templates
-|       └── cargo
-|           └── cargo_formsets.html
-├── category
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── models.py
-|   └── tests.py
-├── common
-|   ├── migrations
-|   |   └── ...
-|   ├── static
-|   |   └── common
-|   |       ├── css
-|   |       |   ├── label-text-color.css
-|   |       |   ├── link-as-button.css
-|   |       |   └── main-page.css
-|   |       ├── img
-|   |       |   ├── favicon.png
-|   |       |   └── workflow.png
-|   |       └── js
-|   |           ├── jquery-3.4.1.min.js
-|   |           ├── jquery.formset.js
-|   |           ├── order-formset.js
-|   |           ├── stock-formset-cargo.js
-|   |           └── stock-formset.js
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   ├── signals.py
-|   └── tests.py
-├── customer
-|   ├── migrations
-|   |   └── ...
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   └── tests.py
-├── mainpage
-|   ├── templates
-|   |   └── mainpage
-|   |       ├── base.html
-|   |       └── index.html
-|   ├── __init__.py
-|   ├── apps.py
-|   ├── urls.py
-|   ├── views.py
-|   └── tests.py
-├── shipment
-|   ├── migrations
-|       └── ...
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   ├── urls.py
-|   ├── tests.py
-|   ├── views.py
-|   └── templates
-|       └── shipment
-|           ├── order.html
-|           ├── order_successful.html
-|           └── shipment_confirmation.html
-├── supplier
-|   ├── migrations
-|       └── ...
-|   ├── __init__.py
-|   ├── admin.py
-|   ├── apps.py
-|   ├── forms.py
-|   ├── models.py
-|   └──  tests.py
-├── templates
-|   └── admin
-|       ├── actionlog
-|       |   └── change_form.html
-|       ├── cargo
-|       |   └── cargo
-|       |       └── change_form.html
-|       ├── category
-|       |   └── change_form.html
-|       ├── customer
-|       |   └── change_form.html
-|       ├── shipment
-|       |   └── shipment
-|       |       └── change_form.html
-|       └── warehouse
-|           └── stock
-|               ├── stock-price-filter.html
-|               └── stock-total-value.html
-├── warehouse-management-test
-|   ├── __init__.py
-|   ├── asgi.py
-|   ├── settings.py
-|   ├── urls.py
-|   └── wsgi.py
-└── warehouse
-    ├── migrations
-    |   └── ...
-    ├── __init__.py
-    ├── admin.py
-    ├── apps.py
-    ├── forms.py
-    ├── models.py
-    ├── filters.py
-    └── tests.py
+- добавить файлу install.sh разрешение на выполнение
+```sh
+$ chmod +x ./install.sh
+```
+- запустить скрипт установки, заменив<br>
+EMAIL_HOST на адрес почтового сервера для отправки сообщений,<br>
+EMAIL_ADDRESS на email на указанном почтовом сервере (будет использоваться как
+email администратора),<br>
+EMAIL_PASSWORD на пароль для email, <br>
+CLIENT_EMAIL на email для тестовых пользователей (можно такой же, как EMAIL_ADDRESS)
+```sh
+$ sudo ./install.sh "EMAIL_HOST" "EMAIL_USERNAME" "EMAIL_PASSWORD" "CLIENT_EMAIL"
+```
+База будет заполнена тестовыми данными.
+Сайт должен быть доступен по адресу 
+<a href="localhost:8888">localhost:8888</a>. <br>
+Для входа на <a href="http://localhost:8888/admin/login/">страницу администрирования</a> можно использовать тестового пользователя admin
+с паролем admin.
+Для остановки и удаления приложения нужно выполнить следующие команды в терминале:
+```sh
+$ chmod +x ./uninstall.sh
+$ sudo ./uninstall.sh
+```
+Для удаления Docker образов Alpine и Nginx:
+```sh
+sudo docker image rm python:3.8-alpine
+sudo docker image rm nginx:latest
 ```
 
 </details>
@@ -155,83 +57,22 @@
     Что можно сделать
   </summary>
 
-- создать поставку на странице /cargo_new
-![Страница поставки](1.png)
+- создать поставку на странице <a href="http://localhost:8888/cargo_new">/cargo_new</a>
+![Страница поставки](screenshots/1.png)
 
-- создать покупку на странице /order;
-![Страница покупки](2.png)
+- создать покупку на странице <a href="http://localhost:8888/order">/order</a>;
+![Страница покупки](screenshots/2.png)
 
-- выбрать созданные поставку и покупку на страницах /admin/cargo/cargo/
-и /admin/shipment/shipment;
-![Страница списка поставок](3.png)
-![Страница списка покупок](4.png)
+- выбрать созданные поставку и покупку на страницах <a href="http://localhost:8888/admin/cargo/cargo">admin/cargo/cargo</a>
+и <a href="http://localhost:8888/admin/shipment/shipment">/admin/shipment/shipment</a>;
+![Страница списка поставок](screenshots/3.png)
+![Страница списка покупок](screenshots/4.png)
 
 - на странице поставки нажать "Подтвердить получение поставки";
 - на странице покупки нажать "Подтвердить готовность к отправке"
 (если количество товаров в покупке превышает количество товаров на складе,
 кнопка будет скрыта).
-![Страница товаров](5.png)
-![Страница категорий](6.png)
-
-</details>
-
-<details>
-  
-  <summary>
-   Как запустить
-  </summary>
-
-<br>
-
-- клонировать в нужную директорию
-```
-$ git clone https://github.com/96tm/warehouse-management-test.git
-```
-- создать виртуальное окружение
-```
-$ python3.8 -m venv environment
-```
-- активировать окружение
-```
-$ source environment/bin/activate
-```
-- установить pipenv <br>
-```
-$ pip3 install pipenv
-```
-- установить зависимости <br>
-```
-$ pipenv install
-```
-- выполнить миграции
-```sh
-$ python manage.py migrate
-```
-- создать пользователя с правами администратора
-
-```sh
-$ python manage.py createsuperuser
-```
-
-- заполнить базу данных тестовыми значениями
-
-```sh
-$ python manage.py shell
-```
-
-```python
->>> from common.fill_db import fill_db
->>> fill_db()
->>> exit()
-```
-- изменить email в файле warehouse-management-test/settings.py <br>
-(EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, <br>
-DEFAULT_FROM_EMAIL, SERVER_EMAIL, ADMINS)
-
-- запустить сервер
-
-```sh
-$ python manage.py runserver
-```
+![Страница товаров](screenshots/5.png)
+![Страница категорий](screenshots/6.png)
 
 </details>

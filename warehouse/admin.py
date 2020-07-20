@@ -11,7 +11,7 @@ from .filters import StockPriceFilter
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
     """
-    Отображение списка товаров
+    Отображение списка товаров.
     """
     list_display = ('article', 'name', 'price', 'number', 'category',)
     list_display_links = ('name',)
