@@ -48,7 +48,7 @@ sudo docker image rm python:3.8-alpine; sudo docker image rm nginx:latest
 <details>
   
   <summary>
-    Что можно сделать
+    Что можно сделать + скриншоты
   </summary>
 
 - создать поставку на странице <a href="http://localhost:8888/cargo_new">/cargo_new</a>
