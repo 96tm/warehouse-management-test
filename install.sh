@@ -7,13 +7,13 @@ docker build -t warehouse .
 
 docker run --name web -d \
 -e ADD_TEST_DATA=1 \
--e ADMIN_EMAIL=den_se_in@mail.ru \
--e SERVER_EMAIL=den_se_in@mail.ru \
--e DEFAULT_FROM_EMAIL=den_se_in@mail.ru \
--e EMAIL_HOST=smtp.mail.ru \
--e EMAIL_HOST_USER=den_se_in@mail.ru \
--e EMAIL_HOST_PASSWORD="/9WGF\\v;]}" \
--e CLIENT_EMAIL=den_se_in@mail.ru \
+-e ADMIN_EMAIL=$2 \
+-e SERVER_EMAIL=$2 \
+-e DEFAULT_FROM_EMAIL=$2 \
+-e EMAIL_HOST=$1 \
+-e EMAIL_HOST_USER=$2 \
+-e EMAIL_HOST_PASSWORD=$3 \
+-e CLIENT_EMAIL=$4 \
 --volume StaticVolume:/home/warehouse/static \
 --volume DatabaseVolume:/home/warehouse/database \
 --restart always \
