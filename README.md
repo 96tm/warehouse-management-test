@@ -11,6 +11,7 @@
   </summary>
 
 <br>
+
 Один из вариантов - использовать дистрибутив Linux и установленный Docker (протестировано на ```Ubuntu 20.04 LTS``` с установленным ```docker.io 19.03.8```). 
 Будут скачаны Docker образы Nginx и Alpine с python3.8, затем создан образ контейнера приложения Django и два volume - директории для базы данных и статических файлов. Доступ к сайту будет осуществляться через контейнер Nginx (порт 8888).
 Для установки нужно выполнить следующие команды в терминале:<br> <br>
@@ -52,7 +53,6 @@ sudo docker image rm python:3.8-alpine; sudo docker image rm nginx:latest
 
 - создать поставку на странице <a href="http://localhost:8888/cargo_new">/cargo_new</a>
 ![Страница поставки](screenshots/1.png)
-
 - создать покупку на странице <a href="http://localhost:8888/order">/order</a>;
 ![Страница покупки](screenshots/2.png)
 
