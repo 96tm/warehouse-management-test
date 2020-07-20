@@ -14,39 +14,33 @@
 <br>
 Один из вариантов - использовать дистрибутив Linux и установленный Docker(протестировано на Ubuntu 20.04 LTS с установленным docker.io 19.03.8). 
 Будут скачаны Docker образы Nginx и Alpine с python3.8, затем создан образ контейнера приложения Django и два volume - директории для базы данных и статических файлов. Доступ к сайту будет осуществляться через контейнер Nginx (порт 8888).
-Для установки нужно выполнить следующие команды в терминале: <br>
+Для установки нужно выполнить следующие команды в терминале:<br> <br>
 
-- клонировать репозиторий в нужную директорию
-```git
-$ git clone https://github.com/96tm/warehouse-management-test.git
-```
-- добавить файлу install.sh разрешение на выполнение
+- клонировать репозиторий в нужную директорию, перейти в неё и добавить скрипту install.sh разрешение на выполнение
 ```sh
-$ chmod +x ./install.sh
+$ git clone https://github.com/96tm/warehouse-management-test.git; cd warehouse-management-test; chmod +x ./install.sh
 ```
 - запустить скрипт установки, заменив<br>
-EMAIL_HOST на адрес почтового сервера для отправки сообщений,<br>
-EMAIL_ADDRESS на email на указанном почтовом сервере (будет использоваться как
+```EMAIL_HOST``` на адрес почтового сервера для отправки сообщений,<br>
+```EMAIL_ADDRESS``` на email на указанном почтовом сервере (будет использоваться как
 email администратора),<br>
-EMAIL_PASSWORD на пароль для email, <br>
-CLIENT_EMAIL на email для тестовых пользователей (можно такой же, как EMAIL_ADDRESS)
+```EMAIL_PASSWORD``` на пароль для email, <br>
+```CLIENT_EMAIL``` на email для тестовых пользователей (можно такой же, как ```EMAIL_ADDRESS```)
 ```sh
 $ sudo ./install.sh "EMAIL_HOST" "EMAIL_USERNAME" "EMAIL_PASSWORD" "CLIENT_EMAIL"
 ```
 База будет заполнена тестовыми данными.
 Сайт должен быть доступен по адресу 
-<a href="localhost:8888">localhost:8888</a>. <br>
-Для входа на <a href="http://localhost:8888/admin/login/">страницу администрирования</a> можно использовать тестового пользователя admin
-с паролем admin.
+<a href="http://localhost:8888">localhost:8888</a>. <br>
+Для входа на <a href="http://localhost:8888/admin/login/">страницу администрирования</a> можно использовать тестового пользователя ```admin```
+с паролем ```admin```.
 Для остановки и удаления приложения нужно выполнить следующие команды в терминале:
 ```sh
-$ chmod +x ./uninstall.sh
-$ sudo ./uninstall.sh
+$ chmod +x ./uninstall.sh; sudo ./uninstall.sh
 ```
 Для удаления Docker образов Alpine и Nginx:
 ```sh
-sudo docker image rm python:3.8-alpine
-sudo docker image rm nginx:latest
+sudo docker image rm python:3.8-alpine; sudo docker image rm nginx:latest
 ```
 
 </details>
