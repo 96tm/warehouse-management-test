@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _
 
 class Supplier(models.Model):
     """
-    Таблица поставщиков
+    Таблица поставщиков.
     """
     class Meta:
         verbose_name = _('Поставщик')

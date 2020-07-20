@@ -19,7 +19,7 @@ class CargoFormsetsView(View):
     """
     Class-based view для обработки страницы
     поставки с добавлением нескольких товаров
-    в одной форме
+    в одной форме.
     """
     stock_formset = forms.formset_factory(form=StockForm,
                                           max_num=50,

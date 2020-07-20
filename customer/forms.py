@@ -6,7 +6,7 @@ from .models import Customer
 
 class CustomerForm(forms.ModelForm):
     """
-    Форма покупателя для интерфейса кладовщика
+    Форма покупателя для интерфейса кладовщика.
     """
     class Meta:
         model = Customer

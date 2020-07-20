@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 
 class Category(MPTTModel):
     """
-    Таблица категорий товаров
+    Таблица категорий товаров.
     """
     class Meta:
         verbose_name = _('Категория')

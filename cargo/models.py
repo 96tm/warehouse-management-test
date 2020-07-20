@@ -12,7 +12,7 @@ def get_cargo_total(obj):
 
 class Cargo(models.Model):
     """
-    Таблица поставок
+    Таблица поставок.
     """
     class Meta:
         verbose_name = _('Поставка')
@@ -40,7 +40,7 @@ class Cargo(models.Model):
 
 class CargoDetails(models.Model):
     """
-    Таблица для оформления нескольки товаров в поставку
+    Таблица для оформления нескольки товаров в поставку.
     """
     order_number = models.ForeignKey('cargo.Cargo', on_delete=models.CASCADE)
     name = models.CharField(max_length=20)

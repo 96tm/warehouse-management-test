@@ -6,6 +6,9 @@ test.db
 .idea
 /workspace.xml
 /.vscode
+.env
+database/*
+venv
 
 # Django stuff:
 *.log

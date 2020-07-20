@@ -6,13 +6,10 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from .models import Supplier
 from category.models import Category
 
-from mptt.admin import TreeRelatedFieldListFilter
-from mptt.fields import TreeNodeMultipleChoiceField
-
 
 class SupplierForm(forms.ModelForm):
     """
-    Форма поставщика для интерфейса кладовщика
+    Форма поставщика для интерфейса кладовщика.
     """
     class Meta:
         model = Supplier

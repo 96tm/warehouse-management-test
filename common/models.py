@@ -11,7 +11,7 @@ from warehouse.models import Stock
 
 def subtotal_value(obj):
     """
-    Подсчет стоимости товаров подкатегорий
+    Подсчет стоимости товаров подкатегорий.
     """
     result = 0
     if obj is not None:
@@ -29,7 +29,7 @@ def subtotal_value(obj):
 def format_date(date):
     """
     Форматировать дату, полученную из базы данных,
-    в установленный часовой пояс
+    в установленный часовой пояс.
     """
     return (date
             .astimezone(tz=pytz.timezone(settings.TIME_ZONE))
@@ -38,7 +38,7 @@ def format_date(date):
 
 class ShipmentStock(models.Model):
     """
-    Таблица многие-ко-многим покупка-товар
+    Таблица многие-ко-многим покупка-товар.
     """
     class Meta:
         unique_together = (("shipment", "stock"),)
@@ -57,7 +57,7 @@ class ShipmentStock(models.Model):
 
 class CargoStock(models.Model):
     """
-    Таблица многие-ко-многим поставка-товар
+    Таблица многие-ко-многим поставка-товар.
     """
     class Meta:
         constraints = [models.UniqueConstraint(fields=['cargo', 'stock'],
@@ -75,7 +75,7 @@ class CargoStock(models.Model):
 
 class SupplierCategory(models.Model):
     """
-    Таблица многие-ко-многим поставщик-категория
+    Таблица многие-ко-многим поставщик-категория.
     """
     class Meta:
         unique_together = (('supplier', 'category'), )

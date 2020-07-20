@@ -18,7 +18,7 @@ class StockPriceFilterForm(forms.Form):
 
 class StockForm(forms.Form):
     """
-    Форма заказа для страниц оформления покупки и поставки
+    Форма заказа для страниц оформления покупки и поставки.
     """
     name = forms.ChoiceField(required=True, label=_("Товар"))
     number = forms.IntegerField(min_value=1,
